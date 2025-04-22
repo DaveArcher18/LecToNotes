@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.mp4
+*.wav
+/tmp
+chunks/
+transcript*.md
