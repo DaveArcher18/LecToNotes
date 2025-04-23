@@ -8,6 +8,9 @@ from groq import Groq
 import os
 from dotenv import load_dotenv
 import sys
+from jinja2 import Environment, FileSystemLoader
+from datetime import datetime
+import re
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -19,8 +22,8 @@ def parse_args():
     )
     parser.add_argument(
         "-o", "--output",
-        help="Output transcript markdown file (default: transcript.md)",
-        default="transcript.md"
+        help="Output transcript LaTeX file (default: transcript.tex)",
+        default="transcript.tex"
     )
     parser.add_argument(
         "-k", "--api-key",
@@ -145,22 +148,25 @@ def format_timestamp(seconds: float) -> str:
     secs = seconds % 60
     return f"{hrs:02d}:{mins:02d}:{secs:06.3f}"
 
-def write_markdown(result: dict, output_path: Path):
-    out = []
-    for seg in result.get("segments", []):
-        # Handle both object attributes and dictionary keys
-        if hasattr(seg, 'start') and hasattr(seg, 'end') and hasattr(seg, 'text'):
-            start = format_timestamp(seg.start)
-            end = format_timestamp(seg.end)
-            text = seg.text.strip()
-        else:
-            start = format_timestamp(seg.get("start") if hasattr(seg, "get") else seg["start"])
-            end = format_timestamp(seg.get("end") if hasattr(seg, "get") else seg["end"])
-            text = (seg.get("text") if hasattr(seg, "get") else seg["text"]).strip()
-        out.append(f"{start} --> {end}\n{text}\n")
-    output_path.write_text("\n".join(out), encoding="utf-8")
-    print(f"Transcript saved to {output_path}")
+def format_timestamp(seconds):
+    mins = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f'{mins:02d}:{secs:02d}'
 
+def write_latex(result: dict, output_path: Path):
+    env = Environment(loader=FileSystemLoader('.'))
+    env.filters['format_timestamp'] = format_timestamp
+    template = env.get_template('transcript_template.tex.j2')
+    latex_content = template.render(
+        title="Lecture Transcript",
+        date=datetime.now().strftime('%Y-%m-%d'),
+        segments=result.get("segments", [])
+    )
+    
+    # Post-process math expressions
+    latex_content = re.sub(r'(\\$)(.*?)(\\$)', r'$\2$', latex_content)
+    output_path.write_text(latex_content, encoding="utf-8")
+    print(f"LaTeX transcript saved to {output_path}")
 
 
 def main():
@@ -173,7 +179,7 @@ def main():
             wav_file = Path(tmp) / 'audio.wav'
             chunk_files = extract_audio(inp, wav_file, cut_minutes=args.cut)
             res = transcribe(chunk_files, initial_prompt=args.WhisperContext, api_key=args.api_key)
-            write_markdown(res, out_md)
+            write_latex(res, out_md)
     except RuntimeError as e:
         print(str(e))
         sys.exit(1)

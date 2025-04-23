@@ -1,0 +1,326 @@
+\documentclass{amsart}
+\usepackage[margin=1.5in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{lastpage}
+\usepackage[bbgreekl]{mathbbol}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{accents}
+\DeclareSymbolFontAlphabet{\mathbb}{AMSb}
+\DeclareSymbolFontAlphabet{\mathbbl}{bbold}
+\input{shortcuts.tex}
+
+\newenvironment{solution}
+  {\renewcommand\qedsymbol{$\blacksquare$}
+  \begin{proof}[Solution]}
+  {\end{proof}}
+\renewcommand\qedsymbol{$\blacksquare$}
+
+\usepackage{amsmath, amssymb, tikz, csquotes, multicol, footnote, biblatex, wrapfig, float, mathrsfs, cleveref, enumitem, marginnote, todonotes}
+\setlength{\headheight}{40pt}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\titleLecture Transcript
+\date2025-04-23
+\author{Generated Transcript}
+\maketitle
+\tableofcontents
+
+\begin{document}
+\large
+\maketitle
+\section*{Transcript}
+
+
+\paragraph*00:00%
+ which I think is May 2nd
+
+\paragraph*00:02%
+ alright so I want to talk
+
+\paragraph*00:07%
+ in this whole course about something
+
+\paragraph*00:09%
+ that I call a Maduro homology
+
+\paragraph*00:11%
+ and
+
+\paragraph*00:19%
+ this is related but different
+
+\paragraph*00:22%
+ from the Sabiro stuff I was talking about
+
+\paragraph*00:25%
+ last term
+
+\paragraph*00:26%
+ so
+
+\paragraph*00:27%
+ so last term
+
+\paragraph*00:30%
+ the title
+
+\paragraph*00:32%
+ was
+
+\paragraph*00:33%
+ have you ever
+
+\paragraph*00:34%
+ read the
+
+\paragraph*00:34%
+ number field
+
+\paragraph*00:35%
+ you don't have
+
+\paragraph*00:39%
+ to know what
+
+\paragraph*00:40%
+ they are
+
+\paragraph*00:40%
+ and in some
+
+\paragraph*00:40%
+ sense I didn't
+
+\paragraph*00:41%
+ really discuss
+
+\paragraph*00:42%
+ them all that
+
+\paragraph*00:42%
+ much in the
+
+\paragraph*00:43%
+ course
+
+\paragraph*00:43%
+ and so
+
+\paragraph*00:47%
+ it's an appropriate
+
+\paragraph*00:49%
+ moment to recall
+
+\paragraph*00:50%
+ what they are
+
+\paragraph*00:51%
+ and
+
+\paragraph*00:54%
+ so are you
+
+\paragraph*00:55%
+ writing
+
+\paragraph*00:56%
+ are we
+
+\paragraph*00:56%
+ Sorry.
+
+\paragraph*01:03%
+ Thanks.
+
+\paragraph*01:11%
+ A bureau It so hard to remember so there are basically
+
+\paragraph*01:24%
+ two sides
+
+\paragraph*01:25%
+ to this story
+
+\paragraph*01:28%
+ and on the left I will put
+
+\paragraph*01:30%
+ some of the things from last term
+
+\paragraph*01:31%
+ and the right from this term
+
+\paragraph*01:33%
+ so for me the motivation
+
+\paragraph*01:34%
+ in defining these things was
+
+\paragraph*01:37%
+ some expectations
+
+\paragraph*01:38%
+ starting from around
+
+\paragraph*01:45%
+ 2017 or so
+
+\paragraph*01:46%
+ that
+
+\paragraph*01:48%
+ there is
+
+\paragraph*01:51%
+ some such a neurochromology
+
+\paragraph*01:53%
+ and I will use this lecture
+
+\paragraph*01:56%
+ to explain
+
+\paragraph*01:56%
+ what I mean by this
+
+\paragraph*02:01%
+ and these are hearings of number fields
+
+\paragraph*02:03%
+ that basically is a zero-dimensional case
+
+\paragraph*02:05%
+ if you have varieties, just a bunch of points
+
+\paragraph*02:07%
+ in some sense
+
+\paragraph*02:08%
+ then you get these are zero rings of number fields
+
+\paragraph*02:11%
+ so there is some kind of
+
+\paragraph*02:12%
+ abstract
+
+\paragraph*02:14%
+ idea of what
+
+\paragraph*02:17%
+ these things should be
+
+\paragraph*02:18%
+ and last time I was talking about
+
+\paragraph*02:21%
+ something much more concrete
+
+\paragraph*02:22%
+ so there were certain certain Q related to perturbative confinement theory whatever that is
+
+\paragraph*02:48%
+ But these Q-theories were completely explicit, so they were very explicit approach,
+
+\paragraph*02:53%
+ which actually defines elements in there.
+
+\paragraph*03:03%
+ So the abstract approach produces the ring or the module.
+
+\paragraph*03:06%
+ This concrete approach will produce elements in there.
+
+\paragraph*03:10%
+ And this abstract side also got started maybe a little later.
+
+\paragraph*03:18%
+ someone coming from
+
+\paragraph*03:20%
+ computations at Garofalidis and Zagilded
+
+\paragraph*03:23%
+ and then somehow we talked to each other
+
+\paragraph*03:25%
+ and realized that there is this
+
+\paragraph*03:27%
+ interesting common object of interest
+
+\paragraph*03:29%
+ and this led to our paper
+
+\paragraph*03:30%
+ and at that time I was actually thinking that I didn believe in this expectation anymore
+
+\paragraph*03:51%
+ But then they found element in there and just revived the expectation.
+
+\paragraph*03:55%
+ And then my student, Ferdinand Wagner, tried to see whether such a thing exists.
+
+\paragraph*04:01%
+ And at first, his master's thesis proved no.
+
+\paragraph*04:03%
+ But now his PhD thesis proves yes.
+
+\paragraph*04:05%
+ So it's a very confusing state of affairs.
+
+\paragraph*04:08%
+ and part of the goal of this course is to somehow understand what's going on, although that will still be confusing.
+
+\paragraph*04:16%
+ So this half was the last term, and this was the last term.
+
+\paragraph*04:28%
+ and
+
+\paragraph*04:31%
+ there have been also some developments
+
+\paragraph*04:37%
+ that bring these two sides
+
+\paragraph*04:39%
+ which so far just give rise to one common object
+
+\paragraph*04:41%
+ these sides seem to converge more
+
+\paragraph*04:45%
+ and maybe or maybe not I will say something about
+
+\paragraph*04:48%
+ what's happening with the relation between these two things
+
+\paragraph*04:51%
+ but mostly these are disjoint things
+
+\paragraph*04:53%
+ that just happen to overlap in certain objects
+
+\paragraph*04:56%
+ and so for this reason you don't
+
+
+\end{document}

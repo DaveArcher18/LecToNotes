@@ -5,6 +5,7 @@ __pycache__/
 .env
 *.mp4
 *.wav
+*.jpg
 /tmp
 chunks/
 transcript*.md

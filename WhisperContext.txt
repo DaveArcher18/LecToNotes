@@ -1,0 +1,8 @@
+Habiro ring, number fields, Frobenius endomorphism, Bloch group, algebraic K-theory, 
+p-adic dilogarithm, q-de Rham cohomology, étale cohomology, de Rham cohomology, 
+crystalline cohomology, prismatic cohomology, p-adic Hodge theory, singular cohomology, 
+pro-étale cohomology, Nygaard filtration, A Omega, adic spaces, Berkovich spaces, perfectoid spaces, 
+formal schemes, delta rings, prisms, Kashaev invariant, Chern–Simons theory, Donaldson–Thomas invariants, 
+cohomological Hall algebras, Kontsevich–Soibelman series, infinite Pochhammer symbol, Stavros Garoufalidis, 
+Campbell Wheeler, Don Zagier, Bhargav Bhatt, Matthew Morrow, James Borger, André Joyal, Alexandru Buium, 
+q-analogues, Legendre symbol, Tate module, Witt vectors, Milne’s sheaves, syntomic complexes

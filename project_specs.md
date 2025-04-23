@@ -122,28 +122,28 @@
 * **Logic (OpenRouter API)**:
     1.  Combine segments of the raw transcript into larger chunks suitable for the LLM context window (respecting timestamps).
     2.  For each chunk:
-        * Prepare a prompt for a selected OpenRouter model (e.g., `mistralai/mistral-7b-instruct:free`, `nousresearch/nous-hermes-2-mixtral-8x7b-dpo:free`).
+        * Prepare a prompt for a selected OpenRouter model (e.g., `moonshotai/kimi-vl-a3b-thinking:free`).
         * Prompt Instructions: "Structure the following lecture transcript segment into paragraphs. Improve readability. Format any simple inline math using LaTeX delimiters ($...$). IMPORTANT: Preserve the original meaning and associate the original start/end timestamps with the corresponding structured paragraphs."
         * Use the `openai` library configured for OpenRouter to send the request.
         * Parse the response, extracting structured text and associated timestamps.
     3.  Combine results from chunks.
 * **Output**: List of structured text blocks with associated timestamps (e.g., `[{'text': 'Paragraph 1...', 'start': 0.0, 'end': 15.5}, {'text': 'Paragraph 2...', 'start': 15.6, 'end': 30.1}]`).
 
-### Step 5: Key Frame Sampling (Input: Video Path)
+### Step 5: Key Frame Sampling (Input: Video Path) - [DONE]
 
-* **Function**: `sample_key_frames(video_path)`
-* **Input**: `video_path` (string)
+* **Function**: `sample_key_frames(video_path, output_dir, threshold=27.0)`
+* **Input**: `video_path` (string), `output_dir` (string), `threshold` (float, default 27.0)
 * **Logic (PySceneDetect)**:
-    1.  Initialize `VideoManager` with `video_path`.
-    2.  Add a `ContentDetector` (or `AdaptiveDetector`) to the `SceneManager`. Adjust threshold based on testing.
-    3.  Call `detect_scenes()` on the `SceneManager`.
-    4.  Retrieve the list of scene cuts (start/end timestamps).
-    5.  For each scene, select representative key frames (e.g., the first frame after the cut, or frames at regular intervals within the scene). Store frame image and precise timestamp (using `FrameTimecode`).
-* **Logic (Alternative: OpenCV)**:
-    1.  Open video using `cv2.VideoCapture`.
-    2.  Read frames at a fixed interval (e.g., every 1 second).
-    3.  Convert current and previous sampled frames to grayscale.
-    4.  Calculate difference (e.g., `cv2.absdiff`, then sum/count non-zero pixels) or SSIM (`skimage.metrics.structural_similarity`).
+    1.  Ensure `output_dir` exists (`os.makedirs`).
+    2.  Open video using `scenedetect.open_video(video_path)`.
+    3.  Initialize `SceneManager`.
+    4.  Add `ContentDetector(threshold=threshold)` to the `SceneManager`.
+    5.  Call `detect_scenes()` on the `SceneManager`.
+    6.  Retrieve the list of scene cuts using `get_scene_list()`.
+    7.  If scenes are found, use `scenedetect.save_images()` to save the first frame (`num_images=1`) of each detected scene to `output_dir` using the scene number as the filename (`image_name_template='$SCENE_NUMBER'`).
+    8.  Return the list of saved frame file paths.
+    9.  Includes error handling and ensures the video object is released.
+* **Output**: List of paths to saved key frame images (strings).
     5.  If the difference/similarity exceeds a threshold, store the current frame and its timestamp (`cap.get(cv2.CAP_PROP_POS_MSEC)`).
 * **Output**: List of key frames with timestamps (e.g., `[(timestamp1, frame1_numpy_array), (timestamp2, frame2_numpy_array), ...]`).
 
@@ -165,9 +165,10 @@
         * Calculate perspective transform matrix (`cv2.getPerspectiveTransform`).
         * Apply warp (`cv2.warpPerspective`) to get a flattened view of the blackboard.
     3.  **Enhancement**:
-        * Apply CLAHE (`cv2.createCLAHE`) for adaptive contrast.
-        * Apply noise reduction (`cv2.medianBlur` or `cv2.fastNlMeansDenoising`).
-        * Apply adaptive thresholding (`cv2.adaptiveThreshold`) or Otsu's binarization (`cv2.threshold` + `cv2.THRESH_OTSU`) to get a binary image optimized for OCR. Experimentation is key here.
+        * Convert to HSV color space (`cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)`)
+        * Define dark green range (H: 35-85, S: 50-255, V: 20-150) and create mask (`cv2.inRange`)
+        * Apply inverted binary thresholding (`cv2.THRESH_BINARY_INV`) to enhance white markings
+        * Add configurable color parameters via environment variables for flexibility
 * **Output**: Processed (flattened, enhanced, binary) blackboard image (NumPy array).
 
 ### Step 7: Mathematical OCR (Input: Processed Blackboard Images with Timestamps)

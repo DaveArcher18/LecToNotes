@@ -1,0 +1,54 @@
+\documentclass{amsart}
+\usepackage[margin=1.5in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{lastpage}
+\usepackage[bbgreekl]{mathbbol}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{accents}
+\DeclareSymbolFontAlphabet{\mathbb}{AMSb}
+\DeclareSymbolFontAlphabet{\mathbbl}{bbold}
+\input{shortcuts.tex}
+
+\newenvironment{solution}
+  {\renewcommand\qedsymbol{$\blacksquare$}
+  \begin{proof}[Solution]}
+  {\end{proof}}
+\renewcommand\qedsymbol{$\blacksquare$}
+
+\usepackage{amsmath, amssymb, tikz, csquotes, multicol, footnote, biblatex, wrapfig, float, mathrsfs, cleveref, enumitem, marginnote, todonotes}
+\setlength{\headheight}{40pt}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+\title{{ title }}
+\date{{ date }}
+\author{Generated Transcript}
+\maketitle
+\tableofcontents
+
+\begin{document}
+\large
+\maketitle
+\section*{Transcript}
+
+{% for seg in segments %}
+\paragraph*{{ seg.start | format_timestamp }}%
+{{ seg.text | replace('$', '\$') | replace('
+', '\\') }}
+{% endfor %}
+
+\end{document}

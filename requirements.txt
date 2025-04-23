@@ -1,0 +1,19 @@
+yt-dlp
+ffmpeg-python
+scenedetect
+opencv-python
+# surya-ocr # Placeholder - Verify actual package name if used
+# pix2tex # Placeholder - Verify actual package name if used
+transformers
+sentence-transformers
+Jinja2
+Groq
+dotenv
+
+
+
+
+
+
+
+
