@@ -9,6 +9,8 @@ sentence-transformers
 Jinja2
 Groq
 dotenv
+scikit-image
+
 
 
 

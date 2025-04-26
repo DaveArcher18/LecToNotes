@@ -1,188 +1,153 @@
-#!/usr/bin/env python3
 import argparse
-import subprocess
+import base64
+import json
+import os
+import re
 import tempfile
 from pathlib import Path
-from groq import Groq
 
-import os
+import ffmpeg  # type: ignore
 from dotenv import load_dotenv
-import sys
-from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
-import re
+from pydub import AudioSegment  # type: ignore
+from groq import Groq  # type: ignore
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Download and transcribe lectures into a timestamped markdown transcript"
+try:
+    import whisper  # type: ignore
+except ImportError:
+    whisper = None
+
+# ────────────────────────────────────────────────────────────────────────────
+load_dotenv()
+client = Groq()  # uses GROQ_API_KEY from .env
+
+# ---------------------------------------------------------------------------
+# helpers
+# ---------------------------------------------------------------------------
+
+def hh_mm_ss(seconds: float) -> str:
+    seconds = int(seconds)
+    h, m = divmod(seconds, 3600)
+    m, s = divmod(m, 60)
+    return f"{h:02d}_{m:02d}_{s:02d}"
+
+
+def download_youtube(url: str, out_dir: Path) -> Path:
+    import yt_dlp  # late import
+    opts = {
+        "outtmpl": str(out_dir / "%(_id)s.%(ext)s"),
+        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+        "merge_output_format": "mp4",
+        "quiet": True,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        return out_dir / f"{info['id']}.mp4"
+
+
+def extract_audio(video: Path, wav: Path):
+    (ffmpeg.input(str(video))
+           .output(str(wav), ac=1, ar=16000, format="wav", loglevel="error")
+           .overwrite_output()
+           .run())
+
+
+def chunk_wav(wav: Path, length_sec: int = 300) -> list[Path]:
+    audio = AudioSegment.from_wav(wav)
+    paths = []
+    for i, start in enumerate(range(0, len(audio), length_sec * 1000)):
+        seg = audio[start:start + length_sec * 1000]
+        p = wav.with_name(f"chunk_{i:03d}.wav")
+        seg.export(p, format="wav")
+        paths.append(p)
+    return paths
+
+
+def read_context() -> str:
+    ctx = Path(__file__).with_name("WhisperContext.txt")
+    return ctx.read_text(encoding="utf-8") if ctx.exists() else ""
+
+
+# ---------------------------------------------------------------------------
+# transcription engines
+# ---------------------------------------------------------------------------
+
+def transcribe_local(wav: Path, prompt: str) -> str:
+    if whisper is None:
+        raise RuntimeError("Local whisper not installed")
+    model = whisper.load_model("medium")
+    out = model.transcribe(
+        str(wav),
+        initial_prompt= "English transcript: " + prompt,
+        task="transcribe",
+        temperature=0
     )
-    parser.add_argument(
-        "input",
-        help="YouTube URL or local video file path"
-    )
-    parser.add_argument(
-        "-o", "--output",
-        help="Output transcript LaTeX file (default: transcript.tex)",
-        default="transcript.tex"
-    )
-    parser.add_argument(
-        "-k", "--api-key",
-        help="Groq API key (or set GROQ_API_KEY environment variable)",
-        default=os.environ.get("GROQ_API_KEY")
-    )
-    parser.add_argument(
-        "--cut", type=float, default=None,
-        help="If set, only transcribe the first N minutes of the video/audio."
-    )
-    parser.add_argument(
-        "--WhisperContext", type=str, default=None,
-        help="String to use as initial_prompt for Whisper context biasing."
-    )
-    return parser.parse_args()
+    return out["text"].strip()
 
-def extract_audio(source: str, wav_file: Path, cut_minutes: float = None):
-    wav_file = Path(wav_file)
-    if source.startswith(("http://", "https://")):
-        cmd = [
-            sys.executable, "-m", "yt_dlp", "-f", "bestaudio", "--extract-audio", "--audio-format", "wav",
-            "-o", str(wav_file)
-        ]
-        if cut_minutes:
-            # yt-dlp: use ffmpeg's -t via --postprocessor-args
-            cmd += ["--postprocessor-args", f"-t {int(cut_minutes*60)}"]
-        cmd.append(source)
-    else:
-        cmd = [
-            "ffmpeg", "-y", "-i", source, "-vn",
-            "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1"
-        ]
-        if cut_minutes:
-            cmd += ["-t", str(int(cut_minutes*60))]
-        cmd.append(str(wav_file))
-    print(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-    
-    # Split audio into 10-minute chunks
-    chunk_duration = 600  # 10 minutes in seconds
-    cmd = ['ffprobe', '-i', str(wav_file), '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0']
-    duration = float(subprocess.check_output(cmd).decode().strip())
-    
-    chunk_files = []
-    chunks_dir = wav_file.parent / 'chunks'
-    chunks_dir.mkdir(exist_ok=True)
-    
-    # Calculate number of full chunks and handle the last chunk specially
-    num_full_chunks = int(duration) // chunk_duration
-    remainder = duration - (num_full_chunks * chunk_duration)
-    
-    # Process full chunks
-    for i in range(num_full_chunks):
-        chunk_path = chunks_dir / f'chunk_{i:04d}.wav'
-        cmd = [
-            'ffmpeg', '-y', '-ss', str(i * chunk_duration), '-i', str(wav_file),
-            '-t', str(chunk_duration), '-acodec', 'copy', str(chunk_path)
-        ]
-        subprocess.run(cmd, check=True)
-        chunk_files.append(chunk_path)
-    
-    # Handle the last partial chunk if it exists and is long enough
-    if remainder > 0.1:  # Ensure it's significantly longer than Groq's minimum requirement (0.01s)
-        chunk_path = chunks_dir / f'chunk_{num_full_chunks:04d}.wav'
-        cmd = [
-            'ffmpeg', '-y', '-ss', str(num_full_chunks * chunk_duration), '-i', str(wav_file),
-            '-acodec', 'copy', str(chunk_path)
-        ]
-        subprocess.run(cmd, check=True)
-        chunk_files.append(chunk_path)
-    
-    return chunk_files
-
-
-def transcribe(wav_files: list[Path], initial_prompt: str = None, api_key: str = None):
-    api_key = api_key or os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("Groq API key missing. Use --api-key or set GROQ_API_KEY environment variable")
-    client = Groq(api_key=api_key)
-    
-    try:
-        all_segments = []
-        for i, chunk_path in enumerate(wav_files):
-            print(f'Processing chunk {i+1}/{len(wav_files)}: {chunk_path.name}')
-            
-            # Verify audio duration before sending to API
-            cmd = ['ffprobe', '-i', str(chunk_path), '-show_entries', 'format=duration', '-v', 'quiet', '-of', 'csv=p=0']
-            chunk_duration = float(subprocess.check_output(cmd).decode().strip())
-            
-            if chunk_duration < 0.01:
-                print(f"Skipping chunk {chunk_path.name} - duration too short ({chunk_duration:.3f}s)")
-                continue
-                
-            with open(chunk_path, 'rb') as audio_file:
-                response = client.audio.transcriptions.create(
-                    file=audio_file,
-                    model='whisper-large-v3',
-                    response_format='verbose_json', 
-                    timestamp_granularities=['segment']
-                )
-            # Apply timestamp offsets based on chunk position
-            chunk_offset = i * 600
-            # Process segments based on the actual response structure
-            segments = response.segments if hasattr(response, 'segments') else response.get('segments', [])
-            for seg in segments:
-                # Handle both object attributes and dictionary keys
-                if hasattr(seg, 'start') and hasattr(seg, 'end'):
-                    seg.start += chunk_offset
-                    seg.end += chunk_offset
-                elif isinstance(seg, dict):
-                    if 'start' in seg and 'end' in seg:
-                        seg['start'] += chunk_offset
-                        seg['end'] += chunk_offset
-            all_segments.extend(segments)
-        return {'segments': all_segments}
-    except Exception as e:
-        raise RuntimeError(f"Groq API error: {str(e)}")
-
-def format_timestamp(seconds: float) -> str:
-    hrs = int(seconds // 3600)
-    mins = int((seconds % 3600) // 60)
-    secs = seconds % 60
-    return f"{hrs:02d}:{mins:02d}:{secs:06.3f}"
-
-def format_timestamp(seconds):
-    mins = int(seconds // 60)
-    secs = int(seconds % 60)
-    return f'{mins:02d}:{secs:02d}'
-
-def write_latex(result: dict, output_path: Path):
-    env = Environment(loader=FileSystemLoader('.'))
-    env.filters['format_timestamp'] = format_timestamp
-    template = env.get_template('transcript_template.tex.j2')
-    latex_content = template.render(
-        title="Lecture Transcript",
-        date=datetime.now().strftime('%Y-%m-%d'),
-        segments=result.get("segments", [])
-    )
-    
-    # Post-process math expressions
-    latex_content = re.sub(r'(\\$)(.*?)(\\$)', r'$\2$', latex_content)
-    output_path.write_text(latex_content, encoding="utf-8")
-    print(f"LaTeX transcript saved to {output_path}")
-
+def transcribe_groq(wav: Path, prompt: str) -> str:
+    with open(wav, "rb") as f:
+        res = client.audio.transcriptions.create(
+            model="whisper-large-v3",
+            file=f,
+            prompt="English transcript: " + prompt,
+            temperature=0,
+            suppress_tokens=[ 1, 2, 3, 4, 5 ] 
+        )
+    return res.text.strip()
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
 
 def main():
-    load_dotenv()
-    args = parse_args()
-    try:
-        inp = args.input
-        out_md = Path(args.output)
-        with tempfile.TemporaryDirectory() as tmp:
-            wav_file = Path(tmp) / 'audio.wav'
-            chunk_files = extract_audio(inp, wav_file, cut_minutes=args.cut)
-            res = transcribe(chunk_files, initial_prompt=args.WhisperContext, api_key=args.api_key)
-            write_latex(res, out_md)
-    except RuntimeError as e:
-        print(str(e))
-        sys.exit(1)
+    ap = argparse.ArgumentParser(description="Get transcript from YouTube or mp4 using Whisper.")
+    ap.add_argument("input", help="YouTube URL or local mp4")
+    ap.add_argument("--use-groq", action="store_true")
+    ap.add_argument("--out", default="transcript.json")
+    args = ap.parse_args()
+
+    work = Path(tempfile.mkdtemp())
+    # Acquire video
+    if re.match(r"https?://", args.input):
+        video = download_youtube(args.input, work)
+    else:
+        video = Path(args.input).resolve()
+        if not video.exists():
+            raise FileNotFoundError(video)
+
+    wav = work / "audio.wav"
+    extract_audio(video, wav)
+
+    chunks = chunk_wav(wav)
+    prompt = read_context()
+
+    out_path = Path(args.out).resolve()
+
+    # -------------------------------- init / load JSON ----------------------
+    if out_path.exists():
+        transcriptions = json.loads(out_path.read_text())
+    else:
+        transcriptions = [{
+            "start": hh_mm_ss(i * 300),
+            "end": hh_mm_ss(i * 300 + 300),
+            "content": ""
+        } for i in range(len(chunks))]
+        out_path.write_text(json.dumps(transcriptions, indent=2))
+
+    # -------------------------------- iterate & fill ------------------------
+    for idx, chunk in enumerate(chunks):
+        entry = transcriptions[idx]
+        if entry["content"]:
+            continue  # already done
+        print(f"[INFO] Transcribing segment {idx+1}/{len(chunks)} …")
+        try:
+            text = transcribe_groq(chunk, prompt) if args.use_groq else transcribe_local(chunk, prompt)
+            entry["content"] = text
+            out_path.write_text(json.dumps(transcriptions, indent=2))
+        except Exception as e:
+            print(f"[ERROR] Chunk {idx} failed: {e}")
+            break  # keep partial JSON intact
+
+    print(f"[DONE] Transcript saved to {out_path}")
+
 
 if __name__ == "__main__":
     main()
