@@ -38,17 +38,11 @@
 \date{{ date }}
 \author{Generated Transcript}
 \maketitle
-\tableofcontents
+
 
 \begin{document}
 \large
 \maketitle
 \section*{Transcript}
-
-{% for seg in segments %}
-\paragraph*{{ seg.start | format_timestamp }}%
-{{ seg.text | replace('$', '\$') | replace('
-', '\\') }}
-{% endfor %}
 
 \end{document}
