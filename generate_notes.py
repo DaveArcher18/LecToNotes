@@ -1,7 +1,8 @@
 import os
+import re
 import json
 import time
-import subprocess
+from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
@@ -10,14 +11,16 @@ load_dotenv()
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # Config
-MODEL = "qwen/qwen2.5-vl-72b-instruct:free"  # You can change this
-OUTPUT_DIR = "lecture_notes_tex"
+MODEL = "thudm/glm-z1-32b:free"
+# meta-llama/llama-4-maverick:free
+# thudm/glm-z1-32b:free
+# qwen/qwen2.5-vl-72b-instruct:free
 LECTURE_FILE = "lecture.json"
 MASTER_FILE = "master.tex"
 OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 
-# Create output directory if it doesn't exist
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# Today's date
+today_str = datetime.today().strftime('%B %d, %Y')
 
 # Load lecture segments
 with open(LECTURE_FILE, "r") as f:
@@ -29,13 +32,16 @@ def create_prompt(spoken, written_list):
 
     template_description = r"""
 The LaTeX document uses:
-- \documentclass{article}
-- \input{shortcuts.tex} for custom macros.
-- \usepackage{quiver} for diagrams.
-- AMS packages like amsmath, amssymb are available.
+- \documentclass{amsart}
+- Many math packages, TikZ, quiver, cleveref, etc.
+- Theorems, definitions, examples, exercises, etc., are allowed.
 
-Format notes with sections, definitions, theorems, remarks, examples.
-Use quiver diagrams where appropriate.
+IMPORTANT:
+You must NOT include \documentclass{}, \usepackage{}, \begin{document}, or \end{document}.
+Only produce clean body content suitable for direct insertion into the main file.
+
+Use sections, definitions, theorems, examples, remarks appropriately.
+Draw diagrams using quiver if necessary.
 """
 
     prompt = rf"""
@@ -53,9 +59,20 @@ Blackboard extracts:
 {board_texts if board_texts else '(No blackboard content)'}
 ---
 
-Output pure LaTeX only, suitable for compiling with the above setup.
+Please output only clean LaTeX body content, without document wrappers.
 """
     return prompt.strip()
+
+def sanitize_latex_content(content: str) -> str:
+    forbidden_patterns = [
+        r"\\documentclass\{.*?\}",
+        r"\\usepackage\{.*?\}",
+        r"\\begin\{document\}",
+        r"\\end\{document\}"
+    ]
+    for pattern in forbidden_patterns:
+        content = re.sub(pattern, "", content, flags=re.IGNORECASE)
+    return content.strip()
 
 def send_to_openrouter(prompt):
     headers = {
@@ -75,69 +92,82 @@ def send_to_openrouter(prompt):
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
-# Main processing loop
-all_blocks = []
-for idx, segment in enumerate(segments):
-    output_path = os.path.join(OUTPUT_DIR, f"block_{idx:04d}.tex")
+def write_preamble(f):
+    f.write(rf"""% Auto-generated master file
+\documentclass{{amsart}}
+\usepackage[margin=1.5in]{{geometry}}
+\usepackage{{amsmath}}
+\usepackage{{tcolorbox}}
+\usepackage{{amssymb}}
+\usepackage{{amsthm}}
+\usepackage{{lastpage}}
+\usepackage{{fancyhdr}}
+\usepackage{{accents}}
+\usepackage{{hyperref}}
+\usepackage{{xcolor}}
+\usepackage{{color}}
+\usepackage[bbgreekl]{{mathbbol}}
+\DeclareSymbolFontAlphabet{{\mathbb}}{{AMSb}}
+\DeclareSymbolFontAlphabet{{\mathbbl}}{{bbold}}
+\input{{shortcuts.tex}}
+\setlength{{\headheight}}{{40pt}}
 
-    if os.path.exists(output_path):
-        print(f"Skipping block {idx} (already exists).")
-        all_blocks.append(output_path)
-        continue
+\usepackage{{amsmath, amssymb, tikz, amsthm, csquotes, multicol, footnote, tablefootnote, biblatex, wrapfig, float, quiver, mathrsfs, cleveref, enumitem, stmaryrd, marginnote, todonotes, euscript}}
+\addbibresource{{refs.bib}}
+\theoremstyle{{definition}}
+\newtheorem{{theorem}}{{Theorem}}[section]
+\newtheorem{{lemma}}[theorem]{{Lemma}}
+\newtheorem{{corollary}}[theorem]{{Corollary}}
+\newtheorem{{exercise}}[theorem]{{Exercise}}
+\newtheorem{{question}}[theorem]{{Question}}
+\newtheorem{{example}}[theorem]{{Example}}
+\newtheorem{{proposition}}[theorem]{{Proposition}}
+\newtheorem{{conjecture}}[theorem]{{Conjecture}}
+\newtheorem{{remark}}[theorem]{{Remark}}
+\newtheorem{{definition}}[theorem]{{Definition}}
+\numberwithin{{equation}}{{section}}
+\setuptodonotes{{color=blue!20, size=tiny}}
 
-    print(f"Processing block {idx} ({segment['start_time']} - {segment['end_time']})...")
+\newenvironment{{solution}}
+  {{\renewcommand\qedsymbol{{$\\blacksquare$}}
+  \begin{{proof}}[Solution]}}
+  {{\end{{proof}}}}
+\renewcommand\qedsymbol{{$\\blacksquare$}}
 
-    prompt = create_prompt(segment["spoken_content"], segment.get("written_content", []))
+\pagestyle{{fancy}}
+\fancyhf{{}}
+\lhead{{Lecture Notes}}
+\chead{{Generated on {today_str}}}
+\rhead{{\thepage}}
 
-    try:
-        notes = send_to_openrouter(prompt)
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(f"% Notes for {segment['start_time']} - {segment['end_time']}\n\n")
-            f.write(notes)
-        all_blocks.append(output_path)
-        print(f"Saved block {idx}.")
-    except Exception as e:
-        print(f"Error on block {idx}: {e}")
-        print("Sleeping for 10 seconds before retry...")
-        time.sleep(10)
-
-# Create master.tex
-print("\nGenerating master.tex...")
-with open(MASTER_FILE, "w", encoding="utf-8") as f:
-    f.write(r"""% Auto-generated master file
-\documentclass{article}
-\makeatletter
-\def\input@path{{tex_resources/}}
-\makeatother
-\input{shortcuts.tex}
-\usepackage{quiver}
-\begin{document}
+\begin{{document}}
 
 """)
-    for block_path in sorted(all_blocks):
-        relative_path = os.path.relpath(block_path, start=os.path.dirname(MASTER_FILE))
-        latex_path = relative_path.replace("\\", "/")
-        f.write(f"\input{{{latex_path}}}\n")
-    f.write(r"""
 
-\end{document}
-""")
-print("Master file created!")
+def append_notes(f):
+    for idx, segment in enumerate(segments):
+        print(f"Processing block {idx} ({segment['start_time']} - {segment['end_time']})...")
+        prompt = create_prompt(segment["spoken_content"], segment.get("written_content", []))
 
-# Optional: Compile the master.tex
-print("Compiling master.tex with pdflatex...")
-try:
-    subprocess.run(["pdflatex", MASTER_FILE], check=True)
-    subprocess.run(["pdflatex", MASTER_FILE], check=True)  # Twice for TOC/refs
-except Exception as e:
-    print(f"Warning: LaTeX compilation failed: {e}")
+        try:
+            notes = send_to_openrouter(prompt)
+            notes = sanitize_latex_content(notes)
+            f.write(f"% Block {idx}: {segment['start_time']} - {segment['end_time']}\n\n")
+            f.write(notes + "\n\n")
+            print(f"Added block {idx}.")
+        except Exception as e:
+            print(f"Error on block {idx}: {e}")
+            print("Sleeping for 10 seconds before retry...")
+            time.sleep(10)
 
-# Optional: Cleanup auxiliary files
-aux_files = [".aux", ".log", ".out", ".toc"]
-for ext in aux_files:
-    try:
-        os.remove(MASTER_FILE.replace(".tex", ext))
-    except FileNotFoundError:
-        pass
+def finalize_document(f):
+    f.write("\n\\end{document}\n")
 
-print("\nAll done. Master PDF should be ready!")
+# Main execution
+if __name__ == "__main__":
+    with open(MASTER_FILE, "w", encoding="utf-8") as f:
+        write_preamble(f)
+        append_notes(f)
+        finalize_document(f)
+
+    print("\n✅ master.tex created successfully!")
