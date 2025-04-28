@@ -1,21 +1,15 @@
-yt-dlp
-ffmpeg-python
-scenedetect
-opencv-python
-# surya-ocr # Placeholder - Verify actual package name if used
-# pix2tex # Placeholder - Verify actual package name if used
-transformers
-sentence-transformers
-Jinja2
-Groq
-dotenv
-scikit-image
+# Core dependencies
+numpy>=1.20.0
+opencv-python>=4.5.0
+scikit-image>=0.18.0
+ffmpeg-python>=0.2.0
+pydub>=0.25.0
+python-dotenv>=0.19.0
+requests>=2.25.0
+matplotlib>=3.4.0
 
-
-
-
-
-
-
-
-
+# Optional dependencies
+tensorflow>=2.5.0  # Optional for deep-feature embeddings in get_boards.py
+whisper>=1.0.0    # For local transcription (alternative to Groq)
+groq>=0.4.0       # For cloud-based transcription
+yt-dlp>=2022.1.1  # For YouTube video downloading
