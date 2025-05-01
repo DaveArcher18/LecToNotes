@@ -4,6 +4,8 @@ import cv2
 import requests
 import numpy as np
 import os
+import time
+import re
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 
@@ -15,7 +17,77 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "qwen/qwen2.5-vl-72b-instruct:free"
+OCR_MODEL = "qwen/qwen2.5-vl-72b-instruct:free"
+REFINER_MODEL = "qwen/qwen3-14b:free"
+THROTTLETIME = 0 
+
+
+def call_openrouter_api(messages, model):
+    """Generic function to call OpenRouter APIs."""
+    api_key = os.getenv("OPENROUTER_API_KEY")  # Secure your API key
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model,
+        "messages": messages
+    }
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+    response.raise_for_status()
+    try:
+        data = response.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except (ValueError, requests.exceptions.JSONDecodeError):
+        # Fallback: return raw text if JSON parsing fails
+        return response.text.strip()
+
+def postprocess_text(text):
+    """Final minor corrections: fix unicode, clean LaTeX fencing, normalize spacing."""
+    try:
+        # use the hyphen form so Python doesn’t interpret any “\u” or “\e” in the literal
+        text = text.encode('utf-8').decode('unicode-escape')
+        # Fix Latin-1 misencoded sequences from UTF-8 escapes (e.g., Ã© → é)
+        text = text.encode('latin-1').decode('utf-8')
+    except UnicodeDecodeError:
+        # Leave original text if decoding fails
+        pass
+    text = re.sub(r'text{([^}]*)}', r'\\text{\1}', text)
+    text = re.sub(r'(?<!\$)\s*\\begin{array}', r'$$\n\\begin{array}', text)
+    text = re.sub(r'\\end{array}(?!\$)', r'\\end{array}\n$$', text)
+    text = text.replace('```markdown', '').replace('```', '')
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+def refine_text_via_llm(text):
+    """Send text to a second-pass LLM refiner."""
+    prompt = rf"""
+You are an expert Markdown formatter specializing in mathematics.
+
+Your output will be displayed directly on a user-facing website, so it must be polished, production-quality, and visually clear.
+
+Given the following content combining Markdown and LaTeX, your tasks are:
+
+- Preserve all mathematical symbols and structures exactly.
+- Correct any Markdown syntax errors and ensure valid Markdown.
+- Decode any Unicode escape sequences within text environments (for example, convert `\u00c3\u00a9` to `é`) before final output.
+- After decoding, fix any Latin-1 misencoded sequences (for example, convert `Ã©` to `é`).
+- Wrap LaTeX math environments (like \begin{{array}}...\end{{array}}) inside $$...$$ fences.
+- Use plain Markdown lists, tables, and headings wherever possible.
+- Do not change mathematical meaning.
+- Do not add commentary or explanation.
+- Output only clean production-quality Markdown.
+- If the content to refine is exactly '%illegible', output it unchanged.
+
+Content to refine:
+
+{text}
+"""
+    messages = [
+        {"role": "system", "content": "You are a precise Markdown and LaTeX formatter."},
+        {"role": "user", "content": prompt}
+    ]
+    return call_openrouter_api(messages, REFINER_MODEL)
 
 def preprocess_image(image_path):
     img = cv2.imread(image_path)
@@ -47,40 +119,29 @@ def encode_image_to_data_uri(img):
     return f"data:image/jpeg;base64,{b64}"
 
 def call_llm_with_image(image_path):
+    """Processes a single board image: OCR -> Refinement -> Postprocessing."""
+
+    # Step 0: Preprocess the image
     img_proc = preprocess_image(image_path)
     data_uri = encode_image_to_data_uri(img_proc)
 
-    payload = {
-        "model": MODEL,
+    # Step 1: OCR Model
+    ocr_payload = {
+        "model": OCR_MODEL,
         "messages": [
             {
                 "role": "system",
                 "content": (
-                    """You are Qwen, an expert in interpreting blackboard photographs from advanced mathematics lectures and transcribing their content into precise LaTeX code.
+"""You are Qwen, an expert in interpreting blackboard photographs from advanced mathematics lectures and summarizing their content into **clear, readable Markdown**, using mathematical symbols and notation wherever possible.
 
-The image is from a lecture by Peter Scholze on Habiro cohomology, arithmetic geometry, and p-adic Hodge theory. The lecture includes a wide range of mathematical concepts, including but not limited to:
+The image is from a lecture by Peter Scholze on Habiro cohomology, arithmetic geometry, and p-adic Hodge theory.
 
-Habiro ring, number fields, Frobenius endomorphism, Bloch group, algebraic K-theory, p-adic dilogarithm, q-de Rham cohomology, étale cohomology, de Rham cohomology, crystalline cohomology, prismatic cohomology, p-adic Hodge theory, singular cohomology, pro-étale cohomology, Nygaard filtration, A Omega, adic spaces, Berkovich spaces, perfectoid spaces, formal schemes, delta rings, prisms, Kashaev invariant, Chern–Simons theory, Donaldson–Thomas invariants, cohomological Hall algebras, Kontsevich–Soibelman series, infinite Pochhammer symbol, and mathematicians such as Stavros Garoufalidis, Campbell Wheeler, Don Zagier, Bhargav Bhatt, Matthew Morrow, James Borger, André Joyal, and Alexandru Buium. You should also recognize terms like q-analogues, Legendre symbol, Tate module, Witt vectors, Milne’s sheaves, and syntomic complexes.
-
-The blackboard may contain:
-
-Complex formulas and equations
-
-Definitions
-
-Diagrams (including commutative diagrams and heuristic sketches)
-
-Tables
-
-Your task is to:
-
-Accurately transcribe all visible content into LaTeX, preserving the structure and mathematical notation.
-
-If the image contains a complex diagram (such as a cohomological tower, commutative square, or geometric visualization), describe the structure of the diagram in a LaTeX-compatible comment and include the relative image path (e.g., % diagram from board_hh_mm_ss_000.jpg). The purpose is to allow diagrams to be typeset manually later.
-
-For any part of the board that is unclear or illegible, insert % illegible as a placeholder comment in the LaTeX output.
-
-Output only the LaTeX code—no additional explanation, no commentary, and no natural language interpretation."""
+Your tasks:
+1. First, assess the complexity of the blackboard image and estimate how difficult it would be to transcribe it faithfully into Markdown.
+2. If it is tractable (containing primarily text, equations, or simple diagrams), transcribe the content accurately into Markdown, using LaTeX notation where appropriate.
+3. If it is highly complex (containing dense diagrams, detailed drawings, or large tables), provide a clear, concise summary highlighting the main structures, elements, and mathematical ideas rather than a full transcription.
+4. If the board is blank or unreadable, output %illegible.
+Output only the resulting Markdown or summary; do not include any commentary on your own process."""
                 )
             },
             {
@@ -88,36 +149,88 @@ Output only the LaTeX code—no additional explanation, no commentary, and no na
                 "content": [
                     {
                         "type": "text",
-                        "text": (
-                            "Here is a blackboard image. Please transcribe exactly what you see into LaTeX markup."
-                        )
+                        "text": "Here is a blackboard image. Please transcribe exactly what you see into Markdown."
                     },
                     {
                         "type": "image_url",
-                        "image_url": {"url": data_uri}
+                        "image_url": {
+                            "url": data_uri
+                        }
                     }
                 ]
             }
         ]
     }
 
-    response = requests.post(ENDPOINT, headers=HEADERS, json=payload)
-    if response.status_code == 200:
-        reply = response.json()
-        try:
-            return reply["choices"][0]["message"]["content"].strip()
-        except (KeyError, IndexError):
-            return "[ERROR: Unexpected LLM response format]"
-    else:
-        return f"[ERROR {response.status_code}]: {response.text}"
+    ocr_response = call_openrouter_api(ocr_payload["messages"], OCR_MODEL)
+    time.sleep(THROTTLETIME)
+
+    # Step 2: Refinement Model
+    refined_text = refine_text_via_llm(ocr_response)
+    time.sleep(THROTTLETIME)
+
+    # Step 3: Python Postprocessing
+    final_text = postprocess_text(refined_text)
+
+    return final_text
+    """Processes a single board image: OCR -> Refinement -> Postprocessing."""
+    with open(image_path, "rb") as image_file:
+        image_data = preprocess_image(image_path)
+        image_data = encode_image_to_data_uri(image_data)
+
+
+    # Step 1: OCR Model
+    ocr_payload = {
+        "model": OCR_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+"""You are Qwen, an expert in interpreting blackboard photographs from advanced mathematics lectures and summarizing their content into **clear, readable Markdown**, using mathematical symbols and notation wherever possible.
+
+The image is from a lecture by Peter Scholze on Habiro cohomology, arithmetic geometry, and p-adic Hodge theory.
+
+Your tasks:
+1. Accurately transcribe visible content into Markdown.
+2. If the blackboard is too complicated to transcribe easily, summarize it clearly.
+3. If the board is blank, output %illegible.
+Output only Markdown, no commentary."""
+                )
+            },
+            {"role": "user", "content": image_data}
+        ]
+    }
+
+    ocr_response = call_openrouter_api(ocr_payload["messages"], OCR_MODEL)
+
+
+    # Step 2: Refinement Model
+    refined_text = refine_text_via_llm(ocr_response)
+    time.sleep(THROTTLETIME)
+
+    # Step 3: Python Postprocessing
+    final_text = postprocess_text(refined_text)
+
+    return final_text
 
 def process_boards_json(json_path):
     import json
     import os
     
-    # Load the JSON file
+    # Load the JSON file, with fallback to quote unquoted keys
     with open(json_path, 'r') as f:
-        boards_data = json.load(f)
+        content = f.read()
+    try:
+        boards_data = json.loads(content)
+    except json.JSONDecodeError:
+        # Quote unquoted property names, strip comments, and remove trailing commas, then retry
+        fixed = re.sub(r'(?m)^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*:', r'"\1":', content)
+        # Remove single-line comments
+        fixed = re.sub(r'(?m)//.*$', '', fixed)
+        fixed = re.sub(r'(?m)#.*$', '', fixed)
+        # Remove trailing commas before } or ]
+        fixed = re.sub(r',\s*(?=[}\]])', '', fixed)
+        boards_data = json.loads(fixed)
     
     # Get the base directory of the JSON file
     json_dir = os.path.dirname(json_path)
