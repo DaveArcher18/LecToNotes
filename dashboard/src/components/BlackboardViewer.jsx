@@ -6,6 +6,74 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import './BlackboardViewer.css';
 
+// Function to preprocess LaTeX content before rendering
+const preprocessLatex = (text) => {
+  if (!text) return '';
+  
+  // Fix common LaTeX errors
+  const processedText = text
+    // Fix double dollar signs with newlines between them
+    .replace(/\$\$\s*\n+\s*\$\$/g, '\n\n')
+    
+    // Fix escaped backslashes that shouldn't be escaped
+    .replace(/\\\\([a-zA-Z]+)/g, '\\$1')
+    
+    // Fix double backslashes in LaTeX commands
+    .replace(/\\\\begin/g, '\\begin')
+    .replace(/\\\\end/g, '\\end')
+    .replace(/\\\\text/g, '\\text')
+    .replace(/\\\\mathbb/g, '\\mathbb')
+    .replace(/\\\\section/g, '\\section')
+    .replace(/\\\\subsection/g, '\\subsection')
+    
+    // Fix common OCR errors with numbers in commands
+    .replace(/\\(\d+)/g, '{$1}')
+    .replace(/\\_/g, '_')
+    .replace(/\\u0007/g, '')
+    .replace(/\\u0007pprox/g, '\\approx')
+    .replace(/\\_\{(\d+)\}/g, '_{$1}')
+    .replace(/\\\^\{(\d+)\}/g, '^{$1}')
+    
+    // Remove any LaTeX document commands
+    .replace(/\\documentclass(\{.*?\})/g, '')
+    .replace(/\\usepackage(\{.*?\})/g, '')
+    .replace(/\\begin\{document\}/g, '')
+    .replace(/\\end\{document\}/g, '')
+    
+    // Fix mismatched math delimiters
+    .replace(/\$\$(.*?)\$/g, '$$$$1$$')
+    .replace(/\$(.*?)\$\$/g, '$$$1$')
+    
+    // Fix common environment issues
+    .replace(/\\begin\{array\}(\s*)\n/g, '\\begin{array}$1')
+    .replace(/\\end\{array\}(\s*)\n/g, '\\end{array}$1')
+    
+    // Fix common bracket issues
+    .replace(/\\left\(\s*\\right\)/g, '()')
+    .replace(/\\left\[\s*\\right\]/g, '[]')
+    .replace(/\\left\\{\s*\\right\\}/g, '{}')
+    
+    // Fix common operators
+    .replace(/\\operatorname\{([^}]+)\}/g, '\\text{$1}')
+    
+    // Fix incomplete environments
+    .replace(/\\begin\{([^}]+)\}(?![\s\S]*?\\end\{\1\})/g, (match, env) => `${match}\n\\end{${env}}`)
+    
+    // Fix common fraction errors
+    .replace(/\\frac([^{])/g, '\\frac{$1}')
+    .replace(/\\frac\{([^}]+)\}([^{])/g, '\\frac{$1}{$2}')
+    
+    // Replace malformed LaTeX with properly formed equivalents
+    .replace(/\\text\s+\{/g, '\\text{')
+    .replace(/\\text\{([^}]*)\}/g, '\\text{$1}')
+    
+    // Fix incorrect equation environments 
+    .replace(/\$\$ \\begin\{align/g, '\\begin{align')
+    .replace(/\\end\{align\} \$\$/g, '\\end{align}');
+  
+  return processedText;
+};
+
 const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment }) => {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const boardsContainerRef = useRef(null);
@@ -161,15 +229,14 @@ const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment })
                   </div>
                   <div className="board-image-container">
                     <img 
-                      src={board.path.startsWith('/') ? board.path : `/${board.path}`} 
+                      src={board.path} 
                       alt={`Blackboard at ${formatTimestamp(board.timestamp)}`} 
                       className="board-image"
                       onError={(e) => {
                         console.error(`Failed to load image: ${board.path}`);
                         // Try alternative path formats if the original fails
-                        if (!e.target.src.includes('/boards/')) {
-                          e.target.src = `/boards/${board.path.split('/').pop()}`;
-                        }
+                        const fileName = board.path.split('/').pop();
+                        e.target.src = `/boards/${fileName}`;
                       }}
                     />
                   </div>
@@ -181,6 +248,10 @@ const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment })
                         strict: false, // Don't throw errors for unsupported commands
                         output: 'html', // Use HTML output for better quality
                         trust: true, // Allow potentially dangerous commands (only use with trusted content)
+                        throwOnError: false, // Don't throw on parse errors
+                        errorColor: '#cc0000', // Red color for errors
+                        maxSize: 100, // Increase size limit for expressions
+                        maxExpand: 1000, // Allow more macro expansions
                         macros: {
                           // Common math macros used in lectures
                           "\\R": "\\mathbb{R}",
@@ -188,23 +259,71 @@ const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment })
                           "\\Z": "\\mathbb{Z}",
                           "\\C": "\\mathbb{C}",
                           "\\Q": "\\mathbb{Q}",
+                          "\\F": "\\mathbb{F}",
                           "\\implies": "\\Rightarrow",
                           "\\iff": "\\Leftrightarrow",
-                          "\\degree": "^{\\circ}"
+                          "\\to": "\\rightarrow",
+                          "\\mapsto": "\\rightarrow",
+                          "\\xrightarrow": "\\rightarrow",
+                          
+                          // Fix common LaTeX issues
+                          "\\2": "{2}",
+                          "\\3": "{3}",
+                          "\\4": "{4}",
+                          "\\5": "{5}",
+                          "\\u0007": "",
+                          "\\u0007pprox": "\\approx",
+                          "\\u0007cute{e}t": "\\acute{e}t",
+                          
+                          // Common text operators
+                          "\\section": "\\section*",
+                          "\\subsection": "\\subsection*",
+                          "\\mid": " ",
+                          "\\Shirai": "\\text{Shirai}",
+                          "\\Showai": "\\text{Showai}",
+                          "\\So": "\\text{So}",
+                          
+                          // Common mathematical operators
+                          "\\operatorname{sing}": "\\text{sing}",
+                          "\\operatorname{dR}": "\\text{dR}",
+                          "\\operatorname{et}": "\\text{\u00e9t}",
+                          "\\operatorname{crys}": "\\text{crys}",
+                          "\\dR": "\\text{dR}",
+                          "\\et": "\\text{\u00e9t}",
+                          "\\crys": "\\text{crys}",
+                          "\\Spec": "\\text{Spec}",
+                          "\\Hom": "\\text{Hom}",
+                          "\\End": "\\text{End}",
+                          "\\colim": "\\text{colim}",
+                          "\\lim": "\\text{lim}",
+                          "\\coker": "\\text{coker}"
+                        }
+                      }]]}
+                      components={{
+                        // Custom components to handle LaTeX-related issues
+                        p: ({node, ...props}) => {
+                          // Check if this paragraph contains only LaTeX and nothing else
+                          const containsOnlyMath = 
+                            node.children.length === 1 && 
+                            node.children[0].type === 'element' && 
+                            (node.children[0].properties?.className?.includes('math-display') || 
+                             node.children[0].properties?.className?.includes('math-inline'));
+                          
+                          return containsOnlyMath ? <>{props.children}</> : <p {...props} />;
                         },
-                        displayMode: false, // Let KaTeX determine display mode from delimiters
-                        throwOnError: false, // Don't throw on parse errors
-                        errorColor: '#cc0000', // Red color for errors
-                        minRuleThickness: 0.05, // Improve thin lines rendering
-                        fleqn: false, // Display math flush left
-                        leqno: false, // Place equation numbers on the left
-                        colorIsTextColor: true, // Make \color work like LaTeX
-                        maxSize: 10, // Maximum size for font metrics
-                        maxExpand: 1000 // Maximum number of macro expansions
-                      }]]
-                    }
+                        // Better handle code blocks that might be mistaken for LaTeX
+                        code: ({node, inline, ...props}) => {
+                          // Check if this might be intended as LaTeX
+                          if (!inline && props.children && typeof props.children === 'string' && 
+                              (props.children.includes('\\begin') || props.children.includes('\\frac'))) {
+                            // Convert to math display
+                            return <div className="math math-display">{'$$' + props.children + '$$'}</div>;
+                          }
+                          return inline ? <code {...props} /> : <pre><code {...props} /></pre>;
+                        }
+                      }}
                     >
-                      {board.text || '\n\n*No markdown content available for this blackboard image.*'}
+                      {preprocessLatex(board.text || '\n\n*No markdown content available for this blackboard image.*')}
                     </ReactMarkdown>
                     <button 
                       className="copy-markdown-button" 
@@ -242,15 +361,14 @@ const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment })
                   </div>
                   <div className="board-image-container">
                     <img 
-                      src={board.path.startsWith('/') ? board.path : `/${board.path}`} 
+                      src={board.path} 
                       alt={`Blackboard at ${formatTimestamp(board.timestamp)}`} 
                       className="board-image"
                       onError={(e) => {
                         console.error(`Failed to load image: ${board.path}`);
                         // Try alternative path formats if the original fails
-                        if (!e.target.src.includes('/boards/')) {
-                          e.target.src = `/boards/${board.path.split('/').pop()}`;
-                        }
+                        const fileName = board.path.split('/').pop();
+                        e.target.src = `/boards/${fileName}`;
                       }}
                     />
                   </div>
@@ -262,29 +380,70 @@ const BlackboardViewer = ({ boards, currentTime, onTimeChange, currentSegment })
                         strict: false,
                         output: 'html',
                         trust: true,
+                        throwOnError: false,
+                        errorColor: '#cc0000',
+                        maxSize: 100,
+                        maxExpand: 1000,
                         macros: {
                           "\\R": "\\mathbb{R}",
                           "\\N": "\\mathbb{N}",
                           "\\Z": "\\mathbb{Z}",
                           "\\C": "\\mathbb{C}",
                           "\\Q": "\\mathbb{Q}",
+                          "\\F": "\\mathbb{F}",
                           "\\implies": "\\Rightarrow",
                           "\\iff": "\\Leftrightarrow",
-                          "\\degree": "^{\\circ}"
+                          "\\to": "\\rightarrow",
+                          "\\mapsto": "\\rightarrow",
+                          "\\xrightarrow": "\\rightarrow",
+                          "\\2": "{2}",
+                          "\\3": "{3}",
+                          "\\4": "{4}",
+                          "\\5": "{5}",
+                          "\\u0007": "",
+                          "\\u0007pprox": "\\approx",
+                          "\\u0007cute{e}t": "\\acute{e}t",
+                          "\\section": "\\section*",
+                          "\\subsection": "\\subsection*",
+                          "\\mid": " ",
+                          "\\Shirai": "\\text{Shirai}",
+                          "\\Showai": "\\text{Showai}",
+                          "\\So": "\\text{So}",
+                          "\\operatorname{sing}": "\\text{sing}",
+                          "\\operatorname{dR}": "\\text{dR}",
+                          "\\operatorname{et}": "\\text{\u00e9t}",
+                          "\\operatorname{crys}": "\\text{crys}",
+                          "\\dR": "\\text{dR}",
+                          "\\et": "\\text{\u00e9t}",
+                          "\\crys": "\\text{crys}",
+                          "\\Spec": "\\text{Spec}",
+                          "\\Hom": "\\text{Hom}",
+                          "\\End": "\\text{End}",
+                          "\\colim": "\\text{colim}",
+                          "\\lim": "\\text{lim}",
+                          "\\coker": "\\text{coker}"
+                        }
+                      }]]}
+                      components={{
+                        p: ({node, ...props}) => {
+                          const containsOnlyMath = 
+                            node.children.length === 1 && 
+                            node.children[0].type === 'element' && 
+                            (node.children[0].properties?.className?.includes('math-display') || 
+                             node.children[0].properties?.className?.includes('math-inline'));
+                          
+                          return containsOnlyMath ? <>{props.children}</> : <p {...props} />;
                         },
-                        displayMode: false,
-                        throwOnError: false,
-                        errorColor: '#cc0000',
-                        minRuleThickness: 0.05,
-                        fleqn: false,
-                        leqno: false,
-                        colorIsTextColor: true,
-                        maxSize: 10,
-                        maxExpand: 1000
-                      }]]
-                    }
+                        code: ({node, inline, ...props}) => {
+                          if (!inline && props.children && typeof props.children === 'string' && 
+                              (props.children.includes('\\begin') || props.children.includes('\\frac'))) {
+                            return <div className="math math-display">{'$$' + props.children + '$$'}</div>;
+                          }
+                          return inline ? <code {...props} /> : <pre><code {...props} /></pre>;
+                        }
+                      }}
                     >
-                      {board.text || '\n\n*No markdown content available for this blackboard image.*'}
+                      {preprocessLatex(board.text || '\n\n*No markdown content available for this blackboard image.*')}
                     </ReactMarkdown>
                     <button 
                       className="copy-markdown-button" 

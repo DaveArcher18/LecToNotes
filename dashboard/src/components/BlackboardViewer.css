@@ -197,36 +197,108 @@
   word-wrap: break-word;
 }
 
-/* Enhance math formula display */
+/* Enhanced math formula display */
 .board-markdown .katex-display {
-  margin: 1.5em 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0.5em 0;
-  background-color: #f9f9f9;
+  padding: 10px 0;
+  margin: 1em 0;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: #f9f9f9;
 }
 
+/* Match display size to improve readability */
 .board-markdown .katex {
-  font-size: 1.1em;
+  font-size: 1.15em;
   line-height: 1.4;
 }
 
-.board-markdown .katex-html {
-  padding: 0.2em 0;
+/* Add specific math styles for different contexts */
+.board-markdown .math-inline {
+  padding: 0 2px;
 }
 
-/* Improve code blocks and inline code */
-.board-markdown code {
-  background-color: #f5f7f9;
-  border-radius: 3px;
-  padding: 0.2em 0.4em;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 0.9em;
-  color: #e83e8c;
+/* Fix spacing around math blocks */
+.board-markdown p {
+  margin: 1em 0;
+  line-height: 1.6;
 }
 
+/* Improve heading display */
+.board-markdown h1, 
+.board-markdown h2, 
+.board-markdown h3 {
+  margin-top: 1.2em;
+  margin-bottom: 0.7em;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.board-markdown h2 {
+  font-size: 1.5em;
+}
+
+.board-markdown h3 {
+  font-size: 1.3em;
+}
+
+/* Better list display */
+.board-markdown ul, 
+.board-markdown ol {
+  padding-left: 2em;
+  margin: 0.7em 0;
+}
+
+.board-markdown li {
+  margin-bottom: 0.5em;
+}
+
+/* Improved table display */
+.board-markdown table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.board-markdown th {
+  background-color: #f1f1f1;
+  font-weight: 600;
+}
+
+.board-markdown th,
+.board-markdown td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.board-markdown tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Improve array environment display */
+.board-markdown .katex .array {
+  margin: 0.5em auto;
+}
+
+/* Better error handling display */
+.katex-error {
+  color: #cc0000;
+  background-color: #fff0f0;
+  padding: 2px 4px;
+  border-radius: 2px;
+  border-bottom: 1px dotted #cc0000;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+/* Add visual help for code blocks */
 .board-markdown pre {
   background-color: #f5f7f9;
   border-radius: 5px;
@@ -234,14 +306,28 @@
   overflow-x: auto;
   border: 1px solid #eaeaea;
   margin: 1em 0;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
 }
 
-.board-markdown pre code {
-  color: #333;
-  background-color: transparent;
-  padding: 0;
-  font-size: 0.9em;
-  line-height: 1.5;
+/* Fix for multiline equations */
+.katex-display > .katex {
+  white-space: normal;
+}
+
+/* Make the equations more prominent and centered */
+.katex-display {
+  text-align: center !important;
+  padding: 10px 0;
+}
+
+/* Fix long equations horizontal scrolling */
+.katex-display > .katex > .katex-html {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-left: 10px;
+  padding-right: 10px;
+  white-space: normal;
 }
 
 .illegible-notice {

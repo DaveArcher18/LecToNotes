@@ -36,10 +36,12 @@ export const loadBlackboardData = async () => {
   try {
     // Try to fetch from the OUTPUT/boards folder first, then fall back to boards folder
     let response = await fetch('/OUTPUT/boards/boards.json');
+    let jsonPath = '/OUTPUT/boards/';
     
     // If not found in OUTPUT/boards folder, try the boards folder
     if (!response.ok) {
       response = await fetch('/boards/boards.json');
+      jsonPath = '/boards/';
     }
     
     if (!response.ok) {
@@ -47,7 +49,12 @@ export const loadBlackboardData = async () => {
     }
     
     const data = await response.json();
-    return data;
+    
+    // Process all board paths to ensure they have the correct path prefix
+    return data.map(board => ({
+      ...board,
+      path: `${jsonPath}${board.path}` // Ensure path has the correct prefix
+    }));
   } catch (error) {
     console.error('Error loading blackboard data:', error);
     throw error;
@@ -158,16 +165,6 @@ export const findBlackboardsByTimestamp = (blackboards, timestamp, timeWindowSec
     const boardTimestamp = formatTimestamp(board.timestamp);
     const boardTimeInSeconds = timestampToSeconds(boardTimestamp);
     
-    // Update the path to include OUTPUT folder if it doesn't already have it
-    if (board.path && !board.path.startsWith('/OUTPUT/') && !board.path.startsWith('http')) {
-      // Check if the path already starts with a slash
-      if (board.path.startsWith('/')) {
-        board.path = `/OUTPUT${board.path}`;
-      } else {
-        board.path = `/OUTPUT/${board.path}`;
-      }
-    }
-    
     // Include boards that are within the time window of the timestamp
     return Math.abs(boardTimeInSeconds - timestampInSeconds) <= timeWindowSeconds;
   });
@@ -200,16 +197,6 @@ export const getBlackboardsForSegment = (blackboards, segment) => {
   let candidateBoards = blackboards.filter(board => {
     const boardTimestamp = formatTimestamp(board.timestamp);
     const boardTimeInSeconds = timestampToSeconds(boardTimestamp);
-    
-    // Update the path to include OUTPUT folder if it doesn't already have it
-    if (board.path && !board.path.startsWith('/OUTPUT/') && !board.path.startsWith('http')) {
-      // Check if the path already starts with a slash
-      if (board.path.startsWith('/')) {
-        board.path = `/OUTPUT${board.path}`;
-      } else {
-        board.path = `/OUTPUT/${board.path}`;
-      }
-    }
     
     // Use the adjusted time range to include boards that might be slightly outside
     // the exact segment boundaries due to rounding or precision issues
@@ -246,15 +233,6 @@ export const getBlackboardsForSegment = (blackboards, segment) => {
     blackboards.forEach(board => {
       const boardTimeInSeconds = timestampToSeconds(formatTimestamp(board.timestamp));
       const distance = Math.abs(boardTimeInSeconds - segmentMidpoint);
-      
-      // Update path as needed
-      if (board.path && !board.path.startsWith('/OUTPUT/') && !board.path.startsWith('http')) {
-        if (board.path.startsWith('/')) {
-          board.path = `/OUTPUT${board.path}`;
-        } else {
-          board.path = `/OUTPUT/${board.path}`;
-        }
-      }
       
       // Only consider boards that are within a reasonable time range (30 seconds)
       if (distance < minDistance && distance < 30) {
@@ -326,25 +304,8 @@ export const getTimestampMatchColor = (boardTimestamp, segmentStart, segmentEnd)
 export const groupBlackboardsByTime = (blackboards, timeWindowSeconds = 5) => {
   if (!blackboards || blackboards.length === 0) return [];
   
-  // Process image paths to ensure they point to the correct location
-  const processedBoards = blackboards.map(board => {
-    const processedBoard = {...board};
-    
-    // Update the path to include OUTPUT folder if it doesn't already have it
-    if (processedBoard.path && !processedBoard.path.startsWith('/OUTPUT/') && !processedBoard.path.startsWith('http')) {
-      // Check if the path already starts with a slash
-      if (processedBoard.path.startsWith('/')) {
-        processedBoard.path = `/OUTPUT${processedBoard.path}`;
-      } else {
-        processedBoard.path = `/OUTPUT/${processedBoard.path}`;
-      }
-    }
-    
-    return processedBoard;
-  });
-  
   // Sort blackboards by timestamp
-  const sortedBoards = [...processedBoards].sort((a, b) => {
+  const sortedBoards = [...blackboards].sort((a, b) => {
     return timestampToSeconds(formatTimestamp(a.timestamp)) - timestampToSeconds(formatTimestamp(b.timestamp));
   });
   
