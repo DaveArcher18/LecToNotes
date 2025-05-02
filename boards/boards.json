@@ -1,287 +1,230 @@
 [
   {
     "timestamp": "00_03_30",
-    "path": "board_00_03_30_000.jpg",
-    "text": "## Habiro Cohomology\n\nNo lecture next two weeks (Easter Holidays)\n\nNext Lecture: May 2\n\n### Habiro Cohomology\n\nHabiro rings of number fields \\\nexplicit elements related to certain $q$-series related to perturbative Chern-Simons theory\n\n$$\n|\n$$\n\nexpectation ($\u0007pprox 2017$) There is some ``Habiro cohomology''"
+    "path": "board_00_03_30_000.jpg"
   },
   {
     "timestamp": "00_08_00",
-    "path": "board_00_08_00_000.jpg",
-    "text": "Since the content to validate is `%illegible`, there is no LaTeX syntax to correct. The output remains the same as there's nothing to process or correct.\n\n%illegible"
+    "path": "board_00_08_00_000.jpg"
   },
   {
     "timestamp": "00_10_15",
-    "path": "board_00_10_15_000.jpg",
-    "text": "## State of the art regarding cohomology theories (Weil type)\n\n$k$ algebraically closed field\n\n$$\n\\{\\text{sep schemes of fin type}/k\\} \\xrightarrow{H^{*}} \\{\\text{A-modules}\\} \\quad \\text{some axioms\n$$\nsatisfying K\u00fcnneth formula\n\n**Better**\n$$\n\\{\\text{sep schemes of fin type}/k\\} \\xrightarrow{D(-)} \\{\\text{A-linear categories}\\} \\quad (\\text{Pr}^{L}_{A})\n$$"
+    "path": "board_00_10_15_000.jpg"
   },
   {
     "timestamp": "00_18_00",
-    "path": "board_00_18_00_000.jpg",
-    "text": "## Examples\n\nThe blackboard contains a graph with axes labeled $\text{Spec } \\mathbb{Z}$ and $\\infty$. The x-axis is marked with prime numbers $2, 3, 5, p$, and the y-axis has values $0, 2, 3, 5$. A line connects the points $(2, \\infty)$ and $(p, \\infty)$, labeled \"Betti\" and \"de Rham\".\n\n### Mathematical Content\n\n1. $X \rightarrow H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n   - $\\mathbb{F}_{p} = \\mathbb{C}$\n   - $\\lambda = 2$\n\n2. $X \rightarrow D(X(\\mathbb{C}), \\mathbb{Z})$\n   - \"Betti-de Rham\"\n\n### Equations and Notes\n\n$$\nH^{*}_{\text{dR}}(X(\\mathbb{C}), \\mathbb{C}) = H^{*}(X(\\mathbb{C}))_{\text{dR}} \\otimes_{\\mathbb{Q}_{p}} \\mathbb{C\n$$\n\n- Put cohomology theory for varieties over $\\mathbb{F}_{p}$, $\text{char } l = p$, coefficients in $\\mathbb{Q}_{l}$."
+    "path": "board_00_18_00_000.jpg"
   },
   {
     "timestamp": "00_21_30",
-    "path": "board_00_21_30_000.jpg",
-    "text": "## Examples\n\nThe blackboard contains a graph with axes labeled and several mathematical expressions written around it. Here's the transcription of the content:\n\n### Graph Description\nThe graph has:\n- Vertical axis labeled with numbers: $2$, $3$, $5$, $\\infty$\n- Horizontal axis labeled \"Spec $\\mathbb{Z}$\" with numbers: $2$, $3$, $5$, $p$\n- A diagonal line labeled \"de Rham\"\n- Horizontal lines labeled \"\u00e9tale\" and \"Betti\"\n\n### Mathematical Expressions\n\n1. $X \rightarrow H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}) \\quad l = 2$\n2. $X \rightarrow D(X(\\mathbb{C}), \\mathbb{Z})$ \"Betti\"\n\n### Additional Notes\nTo the right of the graph:\n$$\n\begin{aligned\n&\text{meet } H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{C}) = H^{*}_{\text{dR}}(X/\\mathbb{C}) \\\n&\text{put when they for varieties over } k, \text{char} \\, k = p \\\n&\text{coefficients } \\mathbb{Z}/\\ell\\mathbb{Z} \text{ of char } l.\n$$ \\end{aligned $$\n$$\n\n$$\nH^{*}_{\text{et}}(X_{\bar{k}}, \\mathbb{Z}/\\ell\\mathbb{Z}) = H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}/\\ell\\mathbb{Z})\n$$"
+    "path": "board_00_21_30_000.jpg"
   },
   {
     "timestamp": "00_22_00",
-    "path": "board_00_22_00_000.jpg",
-    "text": "## Examples\n\nThe graph has axes labeled with numbers and symbols. The x-axis is labeled with \"Spec $\\mathbb{Z}$\" and numbers $2$, $3$, $5$, $p$, while the y-axis is labeled with numbers $2$, $3$, $5$, $\\infty$. The regions on the graph are labeled as \"\u00e9tale\", \"de Rham\", and \"Betti\".\n\n### Mathematical Expressions\n\nThe blackboard contains several mathematical expressions:\n- $X \\mapsto H^{i}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n- $X \\mapsto H^{i}_{\text{dR}}(X(\\mathbb{C})/\\mathbb{C})$\n- $$ H^{i}(X(\\mathbb{C}), \\mathbb{C}) = H^{i}_{\text{dR}}(X(\\mathbb{C})/\\mathbb{C}) \\otimes_{\\mathbb{C}} \\mathbb{C} \text{ at } (p,l) $$\n- For varieties over $k$, $\text{char } k = p$, coefficients in $\\Lambda$ of degree $l$, we have $$ H^{i}_{c}(X_{c}, \\Lambda/\\Lambda) = H^{i}_{\text{sing}}(X(\\mathbb{C}), \\Lambda/\\Lambda) $$\n\n### Additional Notes\n\n- The notation \"$l$\" and \"$p$\" are used, with \"$l = 2$\" and \"$p$\" being a prime.\n- The term \"Betti\" is written next to an arrow pointing to a region on the graph.\n\nCorrected to:\n## Examples\n\nThe graph has axes labeled with numbers and symbols. The x-axis is labeled with \"Spec $\\mathbb{Z}$\" and numbers ${2}$, ${3}$, ${5}$, $p$, while the y-axis is labeled with numbers ${2}$, ${3}$, ${5}$, $\\infty$. The regions on the graph are labeled as \"\u00e9tale\", \"de Rham\", and \"Betti\".\n\n### Mathematical Expressions\n\nThe blackboard contains several mathematical expressions:\n- $X \\mapsto H^{i}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n- $X \\mapsto H^{i}_{\text{dR}}(X(\\mathbb{C})/\\mathbb{C})$\n- $$ H^{i}(X(\\mathbb{C}), \\mathbb{C}) = H^{i}_{\text{dR}}(X(\\mathbb{C})/\\mathbb{C}) \\otimes_{\\mathbb{C}} \\mathbb{C} \text{ at } (p,l) $$\n- For varieties over $k$, $\text{char } k = p$, coefficients in $\\Lambda$ of degree $l$, we have $$ H^{i}_{c}(X_{c}, \\Lambda/\\Lambda) = H^{i}_{\text{sing}}(X(\\mathbb{C}), \\Lambda/\\Lambda) $$\n\n### Additional Notes\n\n- The notation \"$l$\" and \"$p$\" are used, with \"$l = {2}$\" and \"$p$\" being a prime.\n- The term \"Betti\" is written next to an arrow pointing to a region on the graph."
+    "path": "board_00_22_00_000.jpg"
   },
   {
     "timestamp": "00_24_00",
-    "path": "board_00_24_00_000.jpg",
-    "text": "## Examples\n\nThe graph is described as:\n$$\n\begin{array}{c|c\n  & \\infty \\\n$$  \\hline $$\n  & 5 \\\n  & 3 \\\n  l & 2 \\\n$$  \\hline $$\n  & 2 & 3 & 5 & p & \text{Spec } \\mathbb{Z} \\\n  &   &   &   &   & \text{crystalline} \\\n  &   &   &   &   & \text{de Rham} \\\n  &   &   &   &   & \text{\u00e9tale} \\\n  &   &   &   &   & \text{Betti} \\\n$$ \\end{array $$\n$$\n$$\n\nTo the right of the graph:\n$$\nH_{\text{rig}}(X/\\mathbb{C}, \\mathbb{Q}) = H_{\text{dR}}(X/\\mathbb{C})\n$$\nat $(p,l)$.\n\n\"put when they for varieties over $l$, $\text{char} = p$ coefficients $(l)$ at char $l$.\"\n\n$$\n\text{need } H^{*}(X_{\\mathbb{C}}, \\mathbb{Z}) \\otimes \\mathbb{Z}_{l} \\cong H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}_{l})\n$$\n\nAt the bottom:\n1. $X \to H^{1}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n   - $\\overline{\\mathbb{Q}} = \\mathbb{C}$\n   - $\\Lambda = {2}$\n\n2. $X \to D(X(\\mathbb{C}), \\mathbb{Z})$\n   - \"Betti\"\n$$"
+    "path": "board_00_24_00_000.jpg"
   },
   {
     "timestamp": "00_26_30",
-    "path": "board_00_26_30_000.jpg",
-    "text": "## Examples\n\nThe graph illustrates various regions and points, including:\n- \u00e9tale\n- Betti\n- de Rham\n- apollims\n\n### Mathematical Expressions\n\n$$\nX \to H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})\n$$\n\n$$\nX \to D(X(\\mathbb{C}), \\mathbb{Z})\n$$\n\n### Additional Notes\n\n- $\\ell$\n- $\\mathbb{Z}$\n\n### Equations\n\n$$\nH^{*}(X(\\mathbb{C}), \\mathbb{Q}) = H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Q})\n$$\n\nThe notes mention \"put when they for vectors. our $\\ell, \\ell^{*} = ?$\" and \"confusingly $\\ell$ dual $\\ell^{*}$\" with additional equations:\n$$\nH^{*}(X_{\\mathbb{C}}, \\mathbb{Z} \\otimes \\mathbb{Z}) \\cong H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}/\\mathbb{Z})\n$$"
+    "path": "board_00_26_30_000.jpg"
   },
   {
     "timestamp": "00_28_00",
-    "path": "board_00_28_00_000.jpg",
-    "text": "## Examples\n\nThe blackboard contains a graph and several mathematical expressions. Here's the transcription:\n\n### Graph Description\nThe graph appears to be a 2D plot with axes labeled. The x-axis is marked with numbers $2$, $3$, $5$, and $p$, while the y-axis is marked with numbers $2$, $3$, and $5$. The graph contains several lines and annotations, including:\n- A diagonal line labeled \"$l$-adic cohomology\"\n- Horizontal lines labeled \"\u00e9tale\" at different y-values\n- Annotations \"apollina\" and \"Betti\"\n\n### Mathematical Expressions\n\n1. $l \rightarrow \\mathbb{Z}$\n2. $X \rightarrow H^{i}_{?}(X(\\mathbb{C}),\\mathbb{Z})$\n3. $X \rightarrow D(X(\\mathbb{C}),\\mathbb{Z})$\n\n### Right-Hand Side Text\n$$\n\begin{aligned\n\text{local } H^{*}(X(\\mathbb{C}),\\mathbb{Z}) &= H^{*}(X(\\mathbb{C}),\\mathbb{Z}) \\\nd &= d(p,l) \\\n\text{put when they} \\\n\text{for weights. } l &\text{ and } l = ? \\\n\text{cohomology (1)} \\\n\text{of degree } l \\\n\text{and } H_{?}(X,\\mathbb{Z}/l\\mathbb{Z}) \\\n&= H^{*}(X,\\mathbb{Z}/l\\mathbb{Z})\n$$ \\end{aligned $$\n$$\n\n### Notes\n- The exact nature of the graph and some annotations are unclear due to the image quality.\n- Some expressions on the right-hand side are difficult to decipher and may require further clarification.\n- The transcription maintains the original structure and notation as closely as possible."
+    "path": "board_00_28_00_000.jpg"
   },
   {
     "timestamp": "00_28_15",
-    "path": "board_00_28_15_000.jpg",
-    "text": "## Examples\n- $g = 2$\n- $l = 3, 5$\n\n### Graph\nThe graph illustrates a relationship between \"apollons\", \"stable\", \"Betti\", and \"length\".\n\n## Mathematical Expressions\n$$\n\text{Hdg}(X_{0}, G) = \text{Hdg}(X) \frac{d(\\gamma l)}{\n$$\nput colon thing for varieties \\\nover $k$, $\\overline{k} = ?$ \\\nconjecture\n\n Corrected content:\n## Examples\n- $g = 2$\n- $l = 3, 5$\n\n### Graph\nThe graph illustrates a relationship between \"apollons\", \"stable\", \"Betti\", and \"length\".\n\n## Mathematical Expressions\n$$\n\text{Hdg}(X_{0}, G) = \text{Hdg}(X) \frac{d(\\gamma l)}{\n$$\nput colon thing for varieties \nover $k$, $\\overline{k} = ?$ \nconjecture\n\nbecomes \n## Examples\n- $g = 2$\n- $l = 3, 5$\n\n### Graph\nThe graph illustrates a relationship between \"apollons\", \"stable\", \"Betti\", and \"length\".\n\n## Mathematical Expressions\n$$\n\text{Hdg}(X_{0}, G) = \text{Hdg}(X) \frac{d(\\gamma l)}{\n$$\nput colon thing for varieties\nover $k$, $\\overline{k} = ?$\nconjecture\n\nis actually already the same as the corrected output:\n## Examples\n- $g = 2$\n- $l = 3, 5$\n\n### Graph\nThe graph illustrates a relationship between \"apollons\", \"stable\", \"Betti\", and \"length\".\n\n## Mathematical Expressions\n$$\n\text{Hdg}(X_{0}, G) = \text{Hdg}(X) \frac{d(\\gamma l)}{\n$$\nput colon thing for varieties\nover $k$, $\\overline{k} = ?$\nconjecture\n\nThe final corrected content is:\n## Examples\n- $g = 2$\n- $l = 3, 5$\n\n### Graph\nThe graph illustrates a relationship between \"apollons\", \"stable\", \"Betti\", and \"length\".\n\n## Mathematical Expressions\n$$\n\text{Hdg}(X_{0}, G) = \text{Hdg}(X) \frac{d(\\gamma l)}{\n$$\nput colon thing for varieties\nover $k$, $\\overline{k} = ?$\nconjecture"
+    "path": "board_00_28_15_000.jpg"
   },
   {
     "timestamp": "00_30_00",
-    "path": "board_00_30_00_000.jpg",
-    "text": "## Examples\n\n### Graph Description\nThe graph has:\n- Vertical axis labeled with $\\infty$ at the top\n- Horizontal axis labeled with \"Spec $\\mathbb{Z}$\"\n- Points marked on the axis: $2$, $3$, $5$, $p$, $\\infty$\n- Lines and labels on the graph: \"apollims\", \"etale\", \"Betti\", \"deRham\"\n\n### Mathematical Expressions\n1. $l \neq 2$\n2. $X \to H^{i}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$ for $\\overline{\rho} = \\mathbb{C}$, $l = 2$\n3. $X \to H^{i}(X(\\mathbb{C}), \\mathbb{Z})$ \"Betti\"\n4. $$\text{Hig}(X(\\mathbb{C}), \\mathcal{O}) = \text{Hig}^{1,0}(X) $$\n5. $d = p l$\n6. $\text{cond}_{x}(l)$\n7. $$ H^{i}_{\text{dR}}(X_{c} / \\mathbb{Q}_{l}) \\cong H^{i}_{\text{sing}}(X_{0}, \\mathbb{Q}_{l}) $$"
+    "path": "board_00_30_00_000.jpg"
   },
   {
     "timestamp": "00_32_30",
-    "path": "board_00_32_30_000.jpg",
-    "text": "## Step 5: Prismatic Cohomology\n\n### Prismatic $X / \\mathcal{O}_{K}$\n\n$K$ mixed char local field\n\n- Prism for $\\mathcal{O}_{K}$: $(A, I)$\n  - $A / I = \\mathcal{O}_{K}$\n- $\\sim H^{*}(X/A)$ compares to syntomic, $dR$, \u00e9tale"
+    "path": "board_00_32_30_000.jpg"
   },
   {
     "timestamp": "00_33_45",
-    "path": "board_00_33_45_000.jpg",
-    "text": "## Examples\n\nThe blackboard contains a diagram and several mathematical expressions. Here's a transcription of the content:\n\n### Diagram Description\nThe diagram appears to be a 3D plot with axes labeled:\n- Horizontal axis: $p$\n- Vertical axis: $\\infty$\n- Depth axis: $l$\n\nThe diagram includes points and lines labeled:\n- \"\u00e9tale\"\n- \"de Rham\"\n- \"Betti\"\n- \"Grothendieck\"\n\n### Mathematical Expressions\n\n1. Left side:\n   - $\\ell$\n   - $p = 2$\n   - $X \to H^i_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n   - $\\overline{\\mathbb{Q}}_p = \\mathbb{C}$\n   - $l = 2$\n\n2. Right side:\n   $$\n   H^i_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}) = H^i_{\text{dR}}(X(\\mathbb{C}))\n   $$\n   at $(p, l)$\n\n   - \"meet Hodge theory\"\n   - \"put coh. theory for varieties over $k$, char $k = p$\"\n   - \"cohomology theories of char $l$\"\n   - $H^i_{\text{et}}(X_{\\overline{k}}, \\mathbb{Z}_l)$\n   - $\\cong H^i_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}_l)$\n   - $X \to D(X(\\mathbb{C}), \\mathbb{Z})$\n   - \"Betti\"\n\n3. Bottom:\n   - $p = 2$\n   - $l = 2$\n   - $X \to H^i_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n   - $X \to D(X(\\mathbb{C}), \\mathbb{Z})$\n   - \"Betti\""
+    "path": "board_00_33_45_000.jpg"
   },
   {
     "timestamp": "00_36_15",
-    "path": "board_00_36_15_000.jpg",
-    "text": "## Examples\n\n- $\text{Spec } \\mathbb{Z}$\n- $l = 2, 3, 5, \\infty$\n\n### Diagram Description\nThe diagram appears to be a graph with axes labeled with numbers $2$, $3$, $5$, $p$, and $\\infty$. The x-axis is labeled \"$\text{Spec } \\mathbb{Z}$\" and the y-axis is unlabeled but has values ranging from $2$ to $\\infty$. There are several lines and curves intersecting at various points, with labels such as \"Habiro\", \"symplectic\", \"de Rham\", \"\u00e9tale\", and \"Betti\".\n\n### Mathematical Expressions\n\n1. $X \\mapsto H^{i}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})$\n   - $\\mathbb{F} = \\mathbb{C}$\n   - $\\lambda = 2$\n\n2. $X \\mapsto H^{i}_{\text{dR}}(X(\\mathbb{C}), \\mathbb{Z})$ \"Betti\"\n\n### Additional Notes\n$$\nH^{i}_{\text{rig}}(X(\\mathbb{C}), \\mathbb{C}) = H^{i}_{\text{dR}}(X)\n$$\nat $(p, l)$\n\nput cohomology theory for varieties over $k$, $\text{char } k = p$ coefficients $(1)$ of $\text{char } l$.\n\nread $H^{i}_{\text{rig}}(X_{\\mathbb{C}}, \\mathbb{Z} / l \\mathbb{Z}) \\cong H^{i}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z} / l \\mathbb{Z})$"
+    "path": "board_00_36_15_000.jpg"
   },
   {
     "timestamp": "00_36_30",
-    "path": "board_00_36_30_000.jpg",
-    "text": "## Examples\n\nThe diagram appears to be a graph with axes labeled $\text{Spec } \\mathbb{Z}$ and a vertical axis with numbers $2$, $3$, $5$, and $\\infty$. There are several points and lines on the graph, with labels such as \"Habiro\", \"cyclotomic\", \"\u00e9tale\", \"Betti\", and \"de Rham\". The exact nature of the diagram is unclear, but it seems to be illustrating relationships between different mathematical concepts.\n\n### Mathematical Expressions\n\n1. $X \rightarrow H^{i}_{\text{sy}}(X(\\mathbb{C}), \\mathbb{Z}) \\quad \\lambda = {2}$\n2. $X \rightarrow D(X(\\mathbb{C}), \\mathbb{Z})$ \"Betti\"\n\n### Additional Notes\n- $$ H_{i}(X(\\mathbb{C}), \\mathbb{C}) = H_{\text{dR}}(X) $$\n- at $(p, l)$\n- put when they for varieties over $k$, $\text{char } k = p$\n- cohomology of $\text{char } l$\n- need $$ H^{*}(X_{\\mathbb{C}}, \\mathbb{Z}) \\otimes \\mathbb{Z}_{l} \\cong H^{*}_{\text{sy}}(X(\\mathbb{C}), \\mathbb{Z}_{l}) $$"
+    "path": "board_00_36_30_000.jpg"
   },
   {
     "timestamp": "00_36_45",
-    "path": "board_00_36_45_000.jpg",
-    "text": "## Examples\n\nThe graph has axes labeled $\\infty$ and $\text{Spec } \\mathbb{Z}$.\n\n### Graph Description\nThe graph has a vertical axis labeled with numbers $2$, $3$, $5$ and $\\infty$, and a horizontal axis labeled $\text{Spec } \\mathbb{Z}$ with points $2$, $3$, $5$, $p$. \n\n### Mathematical Expressions\nThe blackboard contains several mathematical expressions, including:\n\n$$\nX \to H^{1}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z})\n$$\n\n$$\nX \to H^{1}_{\text{dR}}(X(\\mathbb{C}), \\mathbb{Z})\n$$\n\n$$\nH_{\text{rig}}(X(\\mathbb{C}), \\mathbb{Q}_{p}) = H_{\text{dR}}(X/\\mathbb{Q}_{p})\n$$\n\n### Annotations\nThe blackboard contains additional annotations, including:\n\n- \"meet Hodge theory\"\n- \"put coh. theory for varieties over $l$, $l \neq p$\"\n- \"cohomology of char $l$\"\n- \"need $H^{q}(X_{\\mathbb{C}}, \\mathbb{Z}/l\\mathbb{Z}) \\cong H^{q}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}/l\\mathbb{Z})$\"\n\n### Note\nThe diagram on the blackboard appears to be a complex graph illustrating relationships between various cohomology theories. The exact nature of the diagram is not explicitly stated, but it seems to be related to the annotations and mathematical expressions surrounding it."
+    "path": "board_00_36_45_000.jpg"
   },
   {
     "timestamp": "00_37_00",
-    "path": "board_00_37_00_000.jpg",
-    "text": "## Examples\n\nThe diagram is a 3D graph with axes labeled:\n- Horizontal axis: $\text{Spec } \\mathbb{Z}$\n- Vertical axis: $\\infty$\n- Depth axis: Not explicitly labeled\n\nThe diagram includes points and lines connecting them, with labels such as:\n- Habiro\n- Graphene\n- de Rham\n- \u00e9tale\n- Betti\n\n### Mathematical Expressions\n\n1. $$ X \\mapsto H^{1}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}) $$\n   - $\\mathbb{F} = \\mathbb{C}$\n   - $\\Lambda = \\mathbb{Z}$\n\n2. $$ X \\mapsto D(X(\\mathbb{C}), \\mathbb{Z}) \\quad \text{\"Betti\"} $$\n\n### Additional Notes\n- $\text{Sp}_{\\mathbb{Q}} \\, l$\n- $$ H^{*}(X(\\mathbb{C}), \\mathbb{C}) = H^{*}(X(\\mathbb{C})) \\quad \text{at } (p,l) $$\n- Put cohomology theory for varieties over $l$, char $p$ coefficients $(\\Lambda)$ of char $l$.\n- Need $$ H^{*}(X_{\\mathbb{C}}, \\mathbb{Z}/\\Lambda\\mathbb{Z}) \\cong H^{*}_{\text{sing}}(X(\\mathbb{C}), \\mathbb{Z}/\\Lambda\\mathbb{Z}) $$"
+    "path": "board_00_37_00_000.jpg"
   },
   {
     "timestamp": "00_38_15",
-    "path": "board_00_38_15_000.jpg",
-    "text": "## 5) prismatic $X / \\mathcal{O}_{K}$\n\n$K$ mixed char local field\n\n### Definitions\n- prism for $\\mathcal{O}_{K}$: $(A, I)$\n- $A/I = \\mathcal{O}_{K}$\n- $H^{i}_{\\Delta}(X/A)$ compares to $H^{i}_{\text{crys}}$, $dR$, \u00e9tale\n\n### Example: $q$-de Rham prism\n$$\n[n]_{q} = \frac{q^{n}-1}{q-1} = 1 + q + \\cdots + q^{n-1\n$$\n\n### Specific Example\n- $A = \\mathbb{Z}[[q-1]] \\otimes_{\\mathbb{Z}} \\mathbb{Z}_{p}$\n- $I = ([p]_{q})$\n- $A/I = \\mathbb{Z}_{p}[[q-1]]/(1+q+\\cdots+q^{p-1}) = \\mathbb{Z}_{p}[[q_{p}]]$ is not directly derivable, assuming it is $\\mathbb{Z}_{p}[[q-1]]/(1+q+\\cdots+q^{p-1})$ which simplifies to  $\\mathbb{F}_{p}[[q-1]]$ but the original $A/I = \\mathbb{Z}_{p}[[q_{p}]]$ is kept as is for the sake of the task.\n$A/I = \\mathbb{Z}_{p}[[q_{p}]]$"
+    "path": "board_00_38_15_000.jpg"
   },
   {
     "timestamp": "00_38_30",
-    "path": "board_00_38_30_000.jpg",
-    "text": "## Step 5: Prismatic $X / \\mathcal{O}_{K}$\n$K$ mixed char local field\n\nprism for $\\mathcal{O}_{K}$ $(A, I)$ $\\quad$ s.t. $\\quad$ $A/I = \\mathcal{O}_{K}$\n\n$G$ $H^{i}(X/A)$ compares to $\text{syn}^{i}$, $dR$, \u00e9tale\n\n### Example: $q$-de Rham prism\n$$\n[n]_{q} = \frac{t^{n} - 1}{t - 1} = 1 + t + \\cdots + t^{n-1\n$$\n\n$A = \\mathbb{Z}[[x]] \\circlearrowleft \\sigma$ s.t. $\\sigma(x) = q x$\n\n$I = ([p]_{q})$\n\n$A/I = \\mathbb{Z}_{p}[\\zeta_{p}]"
+    "path": "board_00_38_30_000.jpg"
   },
   {
     "timestamp": "00_43_30",
-    "path": "board_00_43_30_000.jpg",
-    "text": "Since the provided content is empty, there is nothing to correct."
+    "path": "board_00_43_30_000.jpg"
   },
   {
     "timestamp": "00_44_15",
-    "path": "board_00_44_15_000.jpg",
-    "text": "## Examples\n\n### Graph Description\nThe graph appears to be a 2D plot with axes labeled. The x-axis is labeled \"$\text{Spec } \\mathbb{Z}$\" and has markings for prime numbers (${2}, {3}, {5}, \\ldots$). The y-axis is unlabeled but has numbers (${2}, {3}, {5}, \\infty$). The graph contains several points and lines connecting them, with labels such as \"Habiro\", \"Le\", \"\u00e9tale\", \"Betti\", \"Cohomology\", and \"Arithmetic\". \n\n### Mathematical Expressions\n\begin{enumerate\n    \\item $l \to \\mathbb{Z}$\n    \\item $X \to H^{*}_{c}(X; \\mathbb{Z})$\n    \\item $X \\mapsto D(X; \\mathbb{Z})$\n    \\item $\text{Hdg}(X(\\mathbb{C}), \\mathbb{Q}) = \text{Hdg}(X) \\otimes_{\\mathbb{Q}} \\mathbb{Q}_{l}$\n    \\item $\text{Hdg}(X(\\mathbb{C}), \\mathbb{Q}) = \text{Hdg}(X) \\otimes_{\\mathbb{Q}} \\mathbb{Q}_{l}$ for varieties over $k$, $l \neq p$\n    \\item $\text{Coefficients in } A$ and $\text{draw } l$\n    \\item $H^{*}_{c}(X_{c}, \\mathbb{Z}/l\\mathbb{Z}) = \text{Hdg}(X(\\mathbb{C}), \\mathbb{Z}/l\\mathbb{Z})$\n$$ \\end{enumerate $$\n### Notes\n- The graph seems to illustrate relationships between different cohomology theories (e.g., Habiro, \u00e9tale, Betti) and their connections to arithmetic and geometry.\n- The exact nature of the graph and the specific mathematical concepts being illustrated are not immediately clear without additional context.\n- Some parts of the image are partially erased or difficult to read, making it challenging to provide a complete transcription."
+    "path": "board_00_44_15_000.jpg"
   },
   {
     "timestamp": "00_46_45",
-    "path": "board_00_46_45_000.jpg",
-    "text": "## Transcription of Blackboard Content\n\n### Main Content\n\nThe blackboard contains a mix of mathematical expressions and textual notes. The main content can be transcribed as follows:\n\n#### Left Side\n$$\n\u0007lpha(\\overline{\\mathbb{Q}}_{p}) \\; P \\dashv \text{cryst.\n$$\n$\\sim$ $p$-adic Hodge theory\n\nFontaine formulated comparison conjectures\n\ne.g.\n$$\nH^{*}_{\text{crys}} \\otimes B_{\text{crys}} \\cong H^{*}_{\text{et}} \\otimes B_{\text{crys}\n$$\n\n#### Center\n- A diagram with the following elements:\n  - $G_{\\mathbb{Q}_{p}}$\n  - $dR$\n  - $\text{'{e}tale}$\n  - prismatic\n\n#### Right Side\nfor $X/\\mathbb{Z}$\n\n$$\n\begin{cases\nH^{*}_{\text{crys}}(X_{\\mathbb{F}_{p}}/\\mathbb{Z}_{p}) & \text{Frobenius} \\\nH^{*}_{dR}(X/\\mathbb{Z}_{p}) & \\sim \text{Hodge filtration} \\\nH^{*}_{\text{et}}(X_{\\overline{\\mathbb{Q}}_{p}}, \\mathbb{Z}_{p}) & \\mathbb{Q}_{p}/\\mathbb{Z}_{p\n$$ \\end{cases $$\n$$\n$$\n\nHow are these related?\n\n### Notes on the Content\n\n- The diagram in the center appears to illustrate relationships between different cohomology theories or structures related to $G_{\\mathbb{Q}_{p}}$.\n- The right-hand side presents three different cohomology theories for a scheme $X$ over $\\mathbb{Z}$ and asks how they are related.\n- The text and formulas suggest a discussion around $p$-adic Hodge theory and comparison conjectures formulated by Fontaine.\n$$"
+    "path": "board_00_46_45_000.jpg"
   },
   {
     "timestamp": "00_50_30",
-    "path": "board_00_50_30_000.jpg",
-    "text": "## Conjecture (2017)\n\n\"Canonical $q$-deformation in arithmetic geometry\"\n\nThere is a cohom theory for (proper smooth) varieties $X/R$, taking values in finitely generated $R[[q-1]]$-modules$^{+}$ of connection.\n\nSpecialization to $q=1$: $H_{dR}(X/R)$, Gauss-Manin connection.\n\n## Condition\nIf $R$ is a smooth $\\mathbb{Z}_{{2}}$-algebra equipped with an \u00e9tale map $R \to \\mathbb{A}^{d}_{\\mathbb{Z}_{{2}}}$"
+    "path": "board_00_50_30_000.jpg"
   },
   {
     "timestamp": "00_53_00",
-    "path": "board_00_53_00_000.jpg",
-    "text": "## Conjecture (2017)\n\n\"Canonical $q$-deformation in arithmetic geometry\"\n\nThere is a cohom theory for (proper smooth) varieties $X/R$, taking values in \n\n$$ H^{i}_{dR}(X/R[\\![q-1]\\!]) $$\n\n$\\operatorname{Spec} R$ finitely generated $R[\\![q-1]\\!]$-modules$^{\\dagger}$ of connection.\n\nSpecialization to $q=1$: $H_{dR}(X/R)$, $\\operatorname{Spec}$ Main connection.\n\n### Condition\nIf $R$ smooth $\\mathbb{Z}$-algebra equipped with an \u00e9tale map\n\n$$ R \\longrightarrow A^{d}_{\\mathbb{Z}} $$\n\n$^{\\dagger}$ is directly transcribed as there's no clear indication of what it refers to."
+    "path": "board_00_53_00_000.jpg"
   },
   {
     "timestamp": "00_53_15",
-    "path": "board_00_53_15_000.jpg",
-    "text": "## p-adic Hodge Theory\n\n### Main Concepts\n\n$\\partial (p|p)$ $P$ $\\updownarrow$\n\n$p$-adic Hodge theory  \nFontaine\n\n### Cohomology Theories for $X/\\mathbb{Z}$\n\nFor $X/\\mathbb{Z}$:\n$$\n$$\n$$ \\begin{cases $$\nH^{i}_{\\text{\u00e9t}}(X_{\\overline{\\mathbb{F}}_{q}}/\\mathbb{Z}) & \\text{Frobenius} \\\\\nH^{i}_{dR}(X/\\mathbb{Z}) & \\text{Hodge Filtration} \\\\\nH^{i}_{\\text{cris}}(X_{\\overline{\\mathbb{F}}_{q}}, \\mathbb{Z}_{p}) & \\mathbb{Q}_{p}/\\mathbb{Z}_{p\n$$ \\end{cases $$\n$$\n$$\n\n### Comparison Conjectures\n\nHow are these related?\n\nFontaine formulated comparison conjectures:\n$$\nH^{i}_{\\text{\u00e9t}} \\otimes B_{\\text{cris}} \\cong H^{i}_{\\text{cris}} \\otimes B_{\\text{cris}\n$$"
+    "path": "board_00_53_15_000.jpg"
   },
   {
     "timestamp": "00_53_45",
-    "path": "board_00_53_45_000.jpg",
-    "text": "## $p$-adic Hodge Theory\n\n### Left Side\n$\\text{ad}(\\mathfrak{p}/\\mathfrak{p})$ $P \\uparrow$\n\n$$\n$$ \\begin{tikzpicture}[scale=0.5] $$\n$$    \\draw (0,0) circle ({2}); $$\n$$    \\draw (-1,0) -- (1,0); $$\n$$    \\draw (0,-1) -- (0,1); $$\n$$    \\node at (-1.5,1) {generic}; $$\n    \\node at (1.5,1) {$dR$};\n$$    \\node at (0,-1.5) {etale}; $$\n    \\node at (0,1.5) {$p$-adic};\n$$ \\end{tikzpicture $$\n$$\n\n$\\sim p$-adic Hodge theory\n\nFontaine formulated comparison conjectures\n\ne.g. $H^{i}_{\\text{ar}} \\otimes B_{\\text{cris}} \\cong H^{i}_{\\text{et}} \\otimes B_{\\text{cris}}$\n\n### Right Side\nfor $X/\\mathbb{Z}$\n\n$$\n$$\n$$ \\begin{cases $$\nH^{i}_{\\text{ar}}(X_{\\mathbb{F}_{p}}/\\mathbb{Z}_{p}) & \\text{Frobenius} \\\\\nH^{i}_{dR}(X/\\mathbb{Z}_{p}) & \\sim \\text{Hodge Filtration} \\\\\nH^{i}_{\\text{et}}(X_{\\overline{\\mathbb{Q}}}, \\mathbb{Z}_{p}) & \\mathbb{Q}(q/q)\n$$ \\end{cases $$\n$$\n$$\n\nHow are these related?"
+    "path": "board_00_53_45_000.jpg"
   },
   {
     "timestamp": "00_57_15",
-    "path": "board_00_57_15_000.jpg",
-    "text": "### Initial Equation and Basis  \n$(\\omega, \nabla(\\omega))$ basis  \n\n$$\n\nabla^{2}(\\omega) = \frac{1}{4\\lambda(1-\\lambda)} \\omega + \frac{2\\lambda-1}{\\lambda(1-\\lambda)\nabla(\\omega)\n$$\n\n### Horizontal Section  \nhorizontal section is  \n\n$$\nf(\\lambda) \\lambda(1-\\lambda)\\omega - f'(\\lambda)\\lambda(1-\\lambda)\nabla(\\omega)\n$$\n\n### Hypergeometric Function  \nfor hypergeometric function  \n\n$$\nf(\\lambda) = \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left(\frac{i + \frac{1}{2}}{i + 1}\right)^{2} \\lambda^{n\n$$"
+    "path": "board_00_57_15_000.jpg"
   },
   {
     "timestamp": "00_57_45",
-    "path": "board_00_57_45_000.jpg",
-    "text": "## Conjecture (2017)\n\n\"Canonical $q$-deformation in arithmetic geometry\"\n\nThere is a cohom theory for (proper smooth)\n\n$H^{i}(\\mathcal{X}/R, \text{taking values in } K/R)$\n\n### Condition\nIf $R$ is a smooth $\\mathbb{Z}_{{2}}$-algebra equipped with an \u00e9tale map $R \to \\mathbb{A}^{d}_{\\mathbb{Z}_{{2}}}$"
+    "path": "board_00_57_45_000.jpg"
   },
   {
     "timestamp": "00_59_30",
-    "path": "board_00_59_30_000.jpg",
-    "text": "## Theorem after $p$-adic completion [Bhatt-S] is full [Wagner]\n\n### Example\n#### Legendre family of elliptic curves\n\n$$ R = \\mathbb{Z}\\left[\frac{1}{2}\right][\\lambda]\\left[\frac{1}{\\lambda(1-\\lambda)}\right] $$\n\n$$ F^{1}_{dR} = H^{0}(X, \\Omega^{1}_{X/R}) \ni \\omega = \frac{dx}{y} $$\n\n$$ H^{1}_{dR}(X/R) \\; \text{is free} \\; \forall \\; R $$\n\n#### $X/R$ elliptic curve with affine model\n\n$$ y^{2} = x(x-1)(x-\\lambda) $$\n\n- adele group, over $(\\mathbb{R} \\widehat{\\otimes} R)[x]$ get constant sheaf $\\mathcal{F}$ when..."
+    "path": "board_00_59_30_000.jpg"
   },
   {
     "timestamp": "01_00_45",
-    "path": "board_01_00_45_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left(\frac{(1 + q^{i+\frac{1}{2}})x}{1 + q^{i+1}}\right)^{2} \\lambda^{n}. $$\n$$\nSatisfies ${2}$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations deforming Picard-Fuchs related to abelian $q$-de Rham cohomology?"
+    "path": "board_01_00_45_000.jpg"
   },
   {
     "timestamp": "01_02_00",
-    "path": "board_01_02_00_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left(\frac{(1 - q^{i}z)_{q}}{(1 - q^{i+1})_{q}}\right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?"
+    "path": "board_01_02_00_000.jpg"
   },
   {
     "timestamp": "01_03_00",
-    "path": "board_01_03_00_000.jpg",
-    "text": "## This admits natural $q$-deformations, eg  \n$$  \n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left( \frac{(1 + q^{i + \frac{1}{2}})x}{(1 + q^i)x} \right)^{2} q^n  $$\n$$  \nSatisfies $2$nd order $q$-difference equation.  \n\n## Question  \nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?  \n\n## Answer  \nYes (Shuri)"
+    "path": "board_01_03_00_000.jpg"
   },
   {
     "timestamp": "01_03_30",
-    "path": "board_01_03_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits rational $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left( \frac{(1 - q^{i} z)_{q}}{(1 - q^{i+1})_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations deforming period functions related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [Shurai] [Garoufalidis-Wheeler]"
+    "path": "board_01_03_30_000.jpg"
   },
   {
     "timestamp": "01_03_45",
-    "path": "board_01_03_45_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - q^{i + \frac{1}{2}})_{q}}{(1 + q^{i})_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes (Shirai) [Garoufalidis-Wheeler]"
+    "path": "board_01_03_45_000.jpg"
   },
   {
     "timestamp": "01_04_15",
-    "path": "board_01_04_15_000.jpg",
-    "text": "## Transcription of Blackboard Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - zq^{i})^{x}}{(1 - q^{i+1})^{x}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes\n- [Shirai]\n- [Garoufalidis-Wheeler]\n\nmethod for constructing classes in $q$-dR cohomology."
+    "path": "board_01_04_15_000.jpg"
   },
   {
     "timestamp": "01_04_30",
-    "path": "board_01_04_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThe blackboard contains the following mathematical content:\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - zq^{i})^{x}}{(1 - q^{i+1})^{x}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes\n\n[Shirai] [Garoufalidis-Wheeler]\n\nmethod for constructing classes in $q$-dR cohomology."
+    "path": "board_01_04_30_000.jpg"
   },
   {
     "timestamp": "01_05_30",
-    "path": "board_01_05_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left( \frac{(1 + q^{i+1/2}x)^{2}}{(1 - q^{i+1}x)} \right) \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations satisfying Picard-Fuchs $q$-difference equation related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [Shurai] [Garoufalidis-Wheeler]  \nmethod for constructing classes in $q$-dR cohomology."
+    "path": "board_01_05_30_000.jpg"
   },
   {
     "timestamp": "01_09_30",
-    "path": "board_01_09_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1, z)_{x}}{(1, i)_{x}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies 2nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes\n\n[Shirai] [Garoufalidis-Wheeler]\n\nmethod for constructing classes in $q$-dR cohomology.\n\n## Explanation of Transcription\n\nThe given image contains a mathematical expression and some text related to $q$-deformations and $q$-de Rham cohomology. The main equation is a summation involving a product of terms that are squared and multiplied by $\\lambda^{n}$. The text poses a question about the relationship between these explicit $q$-deformations and abstract $q$-de Rham cohomology, and provides an affirmative answer with references to Shirai and Garoufalidis-Wheeler.\n\nThe transcription maintains the original structure and content, using proper LaTeX notation for mathematical expressions and Markdown headings for section titles. The equation is formatted using display math notation ( $$ ... $$ ), and the text is organized into sections using Markdown headings. The references are included as plain text within square brackets. \n\nCorrected minor issues:\n## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1, z)_{x}}{(1, i)_{x}} \right)^{2} \\lambda^{n $$\n$$\nsatisfies ${2}$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes\n\n[Shirai] [Garoufalidis-Wheeler]\n\nmethod for constructing classes in $q$-dR cohomology.\n\n## Explanation of Transcription\n\nThe given image contains a mathematical expression and some text related to $q$-deformations and $q$-de Rham cohomology. The main equation is a summation involving a product of terms that are squared and multiplied by $\\lambda^{n}$. The text poses a question about the relationship between these explicit $q$-deformations and abstract $q$-de Rham cohomology, and provides an affirmative answer with references to Shirai and Garoufalidis-Wheeler.\n\nThe transcription maintains the original structure and content, using proper LaTeX notation for mathematical expressions and Markdown headings for section titles. The equation is formatted using display math notation ( $$ ... $$ ), and the text is organized into sections using Markdown headings. The references are included as plain text within square brackets."
+    "path": "board_01_09_30_000.jpg"
   },
   {
     "timestamp": "01_10_00",
-    "path": "board_01_10_00_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n\\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left( \frac{(1 - q^{i+1}z)_{x}}{(1 - q^{i+1})_{x}} \right)^{2} \\lambda^{n} \\quad \text{satisfies 2nd order $q$-difference equation defining quantum $P$ function.\n$$\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [Aomoto] [Garoufalidis-Wheeler] method for constructing classes in $q$-dR cohomology."
+    "path": "board_01_10_00_000.jpg"
   },
   {
     "timestamp": "01_10_15",
-    "path": "board_01_10_15_000.jpg",
-    "text": "## Transcription of Blackboard Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - z^{2})_{q}}{(1 - t)_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations deforming Picard-Fuchs $q$ related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [Shurai] [Garoufalidis-Wheeler] method for constructing classes in $q$-dR cohomology."
+    "path": "board_01_10_15_000.jpg"
   },
   {
     "timestamp": "01_10_30",
-    "path": "board_01_10_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - z q^{i})_{q}}{(1 - q^{i+1})_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nsatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations of elementary Picard-Fuchs $q$ related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes\n\n[Shwai] [Garoufalidis-Wheeler]\n\nmethod for constructing classes in $q$-dR cohomology."
+    "path": "board_01_10_30_000.jpg"
   },
   {
     "timestamp": "01_11_00",
-    "path": "board_01_11_00_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - zq^{i})_{q}}{(1 - q^{i+1})_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations of the Picard-Fuchs $q$-related to abstract $q$-de Rham?"
+    "path": "board_01_11_00_000.jpg"
   },
   {
     "timestamp": "01_11_15",
-    "path": "board_01_11_15_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \frac{\\prod_{i=0}^{n}\\left(\frac{(1\\cdot{2})_{q}}{(1\\cdot{1})_{q}}\right)^{2}}{\\lambda^{n}}. $$\n$$\nSatisfies 2nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations defining period functions related to abstract $q$-de Rham [?]."
+    "path": "board_01_11_15_000.jpg"
   },
   {
     "timestamp": "01_11_45",
-    "path": "board_01_11_45_000.jpg",
-    "text": "%illegible"
+    "path": "board_01_11_45_000.jpg"
   },
   {
     "timestamp": "01_12_15",
-    "path": "board_01_12_15_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \frac{\\prod_{i=0}^{n-1} (1 - q^{2i+1})^{2}_{q}}{\\prod_{i=0}^{n-1} (1 - q^{i+1})_{q}} \\lambda^{n}. $$\n$$\nSatisfies {2}nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations deforming Picard-Fuchs related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [Showai ... cohomology?]"
+    "path": "board_01_12_15_000.jpg"
   },
   {
     "timestamp": "01_12_30",
-    "path": "board_01_12_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - q^{i+{2}})}{(1 - q^{i+{1}})} \right)^{{2}} \\lambda^{n}. $$\n$$\nSatisfies {2}nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [?]"
+    "path": "board_01_12_30_000.jpg"
   },
   {
     "timestamp": "01_13_30",
-    "path": "board_01_13_30_000.jpg",
-    "text": "## Transcription of Mathematical Content\n\nThis admits rational $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - q^{i + \frac{1}{2}})x}{(1 + q^{i + 1})q} \right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre there explicit $q$-deformations deforming Picard-Fuchs related to abelian $q$-de Rham cohomology?\n\n### Answer\nYes [Shuhei [?]] cohomology?"
+    "path": "board_01_13_30_000.jpg"
   },
   {
     "timestamp": "01_13_45",
-    "path": "board_01_13_45_000.jpg",
-    "text": "## Transcription of Blackboard Content\n\nThis admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - q^{i+{2}})_{q}}{(1 - q^{i+{1}})_{q}} \right)^{{2}} \\lambda^{n}. $$\n$$\nSatisfies {2}nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations of the family Picard-Fuchs related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes [?]"
+    "path": "board_01_13_45_000.jpg"
   },
   {
     "timestamp": "01_14_00",
-    "path": "board_01_14_00_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left( \frac{(1 - q^{i+1/2})_{q}}{(1 - q^{i+1})_{q}} \right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations deforming Picard-Fuchs related to abstract $q$-de Rham cohomology?\n\n### Answer\nYes."
+    "path": "board_01_14_00_000.jpg"
   },
   {
     "timestamp": "01_14_30",
-    "path": "board_01_14_30_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n} \\left(\frac{(1 - zq^{i})_{q}}{(1 - q^{i+1})_{q}}\right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre there explicit $q$-deformations of $\textit{Jacobi}$/Poincar\u00e9 functions?"
+    "path": "board_01_14_30_000.jpg"
   },
   {
     "timestamp": "01_15_00",
-    "path": "board_01_15_00_000.jpg",
-    "text": "This admits natural $q$-deformations, e.g.\n$$\n$$ \\sum_{n=0}^{\\infty} \\prod_{i=0}^{n-1} \\left( \frac{(1 - q^{i+1/2})_{x}}{(1 - q^{i+1})_{x}} \right)^{2} \\lambda^{n}. $$\n$$\nSatisfies $2$nd order $q$-difference equation.\n\n### Question\nAre these explicit $q$-deformations the quantum Picard-Fuchs?"
+    "path": "board_01_15_00_000.jpg"
   },
   {
     "timestamp": "01_15_30",
-    "path": "board_01_15_30_000.jpg",
-    "text": "## Problem\nThe prismatic cohomology of $g$-adic prism  \n- $g-1$ $\rightarrow$ $\\mathcal{R}$ cohomology  \n- $g = \\zeta_{g^{n}},\\, n > 0$ $\rightarrow$ Hodge cohomology  \n\nbad = need to treat all roots of unity in same way  \n\nin dim $0$, issue disappears $\rightarrow$ Habiro ring of a number field  \n\nin higher dim, does not seem to work"
+    "path": "board_01_15_30_000.jpg"
   },
   {
     "timestamp": "01_16_15",
-    "path": "board_01_16_15_000.jpg",
-    "text": "## Problem\n\nPrismatic cohomology of $g$-dR prism\n\n$g-1$  \ndR cohom $\\xrightarrow{g-1}$ Hodge cohom\n\n$g = \\zeta_{p^{n}},\\, n > 0$\n\nbad = need to treat all roots of unity in same way\n\nin dim $0$, ssne disappears $\\longrightarrow$ Habiro ring of a number field\n\nin higher dim, does not seem to work.\n\nexcept if one can modify $g$-dR cohom to also be Hodge cohom at $g = 1$"
+    "path": "board_01_16_15_000.jpg"
   },
   {
     "timestamp": "01_16_30",
-    "path": "board_01_16_30_000.jpg",
-    "text": "## Problem\n\n- Prismatic cohomology of $g$-dR prism $\\xrightarrow{g=1}$ dR cohomology  \n  - bad: need to treat all roots of unity in same way  \n- $g = \\zeta_{p^{n}}$, $n > 0$ $\\Rightarrow$ Hodge cohomology  \n\nIn dim $0$, issue disappears $\\rightarrow$ Habiro ring $g = 0 \\mod p$  \nIn higher dim, does not seem to work.  \n\nExcept if one can modify $g$-dR cohomology to also be Hodge cohomology at $g = 1$"
+    "path": "board_01_16_30_000.jpg"
   },
   {
     "timestamp": "01_19_45",
-    "path": "board_01_19_45_000.jpg",
-    "text": "### Theorem (Wagner)\nThis does not work at fixed prime $p$.\n\n### Theorem (Wagner)\nIgnoring finitely many bad primes, it works (depending on $R$).\n\n- uses very abstract machinery,\n- uses relation to topological cyclic homology."
+    "path": "board_01_19_45_000.jpg"
   },
   {
     "timestamp": "01_24_00",
-    "path": "board_01_24_00_000.jpg",
-    "text": "## Content\n\n$\\underline{\\text{Tim} (\\text{Wagner})}$ This does not work at fixed primes $p$\n\n$\\underline{\\text{Tim} (\\text{Wagner})}$ by wrong finitely many bad primes, it works (depending on $R$)\n\n$\\downarrow$\n\nuses very abstract machinery uses relation to topological quantum handbag"
+    "path": "board_01_24_00_000.jpg"
   },
   {
     "timestamp": "01_28_30",
-    "path": "board_01_28_30_000.jpg",
-    "text": "$$\n$$ \\begin{aligned $$\n&\\underline{\\text{Thm (Wagner)}} && \\text{This does not work at fixed primes $p$} \\\\\n&\\underline{\\text{Thm (Wagner)}} && \\text{by ignoring finitely many bad primes, it works (depending on $R$)} \\\\\n& && \\text{uses very abstract machinery} \\\\\n& && \\text{uses relation to topological quantum homology\n$$ \\end{aligned $$\n$$"
+    "path": "board_01_28_30_000.jpg"
   }
 ]
