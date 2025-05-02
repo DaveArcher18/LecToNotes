@@ -1,95 +1,99 @@
-# LecToNotes Development Plan
+# Improvement Plan for get_transcript.py
 
-## 1. Enhanced Content Navigation
+## 1. Audio Preprocessing and Whisper Optimization
 
-- **Timeline/Progress Bar**
-  - Implement a visual timeline showing lecture segments
-  - Add clickable markers where board content changes
-  - Include timestamp indicators and hover previews
+### 1.1 Audio Preprocessing
+- Implement noise reduction using librosa or scipy to clean the audio before processing
+- Add voice normalization to adjust audio levels for more consistent transcription
+- Implement a silence detection and removal step to improve processing speed
+- Add option for audio speed adjustment (0.9-1.1x) for better recognition of technical terms
 
-- **Keyboard Navigation**
-  - Add keyboard shortcuts (left/right arrows) for jumping between segments
-  - Implement time-based jumps (e.g., 30s, 1min, 5min)
-  - Add quick-jump to specific timestamps
+### 1.2 Whisper Configuration Improvements
+- Update to use the latest Whisper API with optimal settings
+- Add support for beam search with beam size of 5 for better accuracy
+- Implement a word-level timestamps option for more precise segmentation
+- Configure proper language detection or force English for academic content
+- Enable proper temperature settings (0.0 for deterministic output)
+- Add a comprehensive list of technical terms to the initial_prompt:
+  - Mathematics: cohomology, Habiro, prismatic, crystalline, sheaves, Grothendieck, etc.
+  - Specialized terms found in lecture videos
 
-- **Table of Contents View**
-  - Extract section headings from board content
-  - Create collapsible sidebar navigation panel
-  - Link TOC entries to specific timestamps
+### 1.3 Context Window Optimization
+- Implement overlapping segments for transcription (5-minute chunks with 10-second overlap)
+- Pass the previous segment's transcript as context for the next segment
+- Create a specialized WhisperContext.txt file with key terms and expressions
+- Train a custom word list for the specific mathematical domain terms
 
-## 2. Display Mathematics Functionality
+### 1.4 Repetition Detection and Cleanup
+- Implement post-processing to detect and eliminate repetitive phrases
+- Create a pattern recognition system to catch "echo patterns" like seen in transcript.json
+- Use text similarity metrics to identify and merge repeated sentences
+- Add validation to ensure logical flow between sentences
 
-- **LaTeX Rendering Improvements**
-  - Fix current rendering issues by implementing KaTeX or MathJax for proper LaTeX display
-  - Create custom renderer to handle specialized math notation
-  - Implement syntax highlighting for mathematical expressions
-  - Add options to adjust rendering style/size
+## 2. Summary Generation
 
-- **OCR Enhancement** (`LLM_OCR.py`)
-  - Refine prompt engineering to prioritize accurate LaTeX extraction
-  - Implement multi-pass OCR with specialized math symbol detection
-  - Add post-processing rules specific to common math notation patterns
-  - Create validation step to ensure extracted LaTeX is syntactically correct
-  - Consider fine-tuning OCR model specifically for mathematical notation
+### 2.1 Summary Structure
+- Create an information-rich first paragraph focused on content details
+- Generate an "Added motivation" second paragraph explaining why the content matters
+- Ensure summaries include key terms, concepts, and their relationships
+- Follow academic tone but maintain readability and clarity
 
-- **Board Extraction Improvements** (`get_boards.py`)
-  - Enhance board detection algorithm for better edge detection
-  - Implement perspective correction for angled board shots
-  - Add contrast/brightness normalization for better image quality
-  - Refine deduplication algorithm with better thresholds
-  - Consider adding options for manual board selection/correction
+### 2.2 Sliding Context Window
+- Implement a sliding context window system that provides previous summaries as context
+- Structure prompt to encourage coherent progression across summaries
+- Add a "themes so far" tracking mechanism to ensure consistency
+- Integrate cross-references to previously mentioned concepts
 
-- **Markdown Integration**
-  - Properly fence LaTeX blocks for correct rendering
-  - Create hybrid Markdown+LaTeX renderer
-  - Implement proper escaping for LaTeX within Markdown
+### 2.3 Summary Generation Integration
+- Create a new field "summary" in transcript.json for each entry
+- Use Groq/OpenAI API for generating summaries with appropriate prompts
+- Add retry logic with backoff for API failures
+- Implement parallel processing for summary generation to improve speed
 
-## 3. Image Extraction Improvements
+### 2.4 Incremental Saving
+- Add a checkpoint system to save progress after each segment is processed
+- Ensure transcript.json is updated immediately after each segment is transcribed
+- Implement a resume feature to continue from the last successfully processed segment
+- Add integrity checks to ensure JSON validity after each update
 
-- **Frame Selection Optimization**
-  - Refine sampling interval logic (currently every 3 seconds) to adapt based on content change rate
-  - Add scene detection to identify when instructor moves away from/to the board
-  - Implement multi-resolution analysis to better identify frames with clear, readable content
+## 3. Implementation Details
 
-- **Enhanced Deduplication**
-  - Tune threshold parameters (`phash_thresh`, `ssim_thresh`, `deep_thresh`) for better discrimination
-  - Add content-aware filtering to prioritize frames with more text/equations
-  - Implement weighted scoring system combining image quality metrics with content density
-  - Add temporal importance weighting (e.g., prefer frames that stay visible longer)
-  - Consider hierarchical clustering approach for more precise similarity grouping
+### 3.1 Code Structure
+- Refactor `get_transcript.py` into modular components:
+  - AudioProcessor: handles all audio preprocessing
+  - TranscriptionEngine: interfaces with Whisper API
+  - SummaryGenerator: handles summary creation
+  - PersistenceManager: handles file saving and recovery
 
-- **Image Quality Improvements**
-  - Add intelligent contrast enhancement for better readability
-  - Implement glare/reflection removal for boards with lighting issues
-  - Add image sharpening specific to handwritten content
-  - Create image segmentation to isolate and enhance text regions
-  - Consider super-resolution for low-quality video sources
+### 3.2 Command Line Interface
+- Add flexible CLI options:
+  - `--preprocess-only`: Just clean the audio without transcribing
+  - `--summarize-only`: Generate summaries for existing transcriptions
+  - `--chunk-size`: Customize the length of each segment (default: 5 minutes)
+  - `--quality`: Select transcription quality level (balanced/accuracy/speed)
+  - `--context-file`: Specify custom context file
 
-## 4. UI/UX Improvements
+### 3.3 Progress Tracking
+- Implement a progress bar using tqdm
+- Add detailed logging with timestamps for each processing stage
+- Create a summary report after completion with quality metrics
 
-- **Advanced Image Viewing**
-  - Implement zoom/pan controls for board images
-  - Add image comparison view (before/after)
-  - Create fullscreen viewing mode for detailed examination
+### 3.4 Error Handling
+- Add comprehensive error handling at each processing stage
+- Implement automatic recovery from API failures
+- Create a diagnostic mode for debugging transcription issues
+- Add validation for each output to ensure quality
 
-- **Dark Mode**
-  - Implement system-preference-based theme detection
-  - Create dark color scheme for all UI elements
-  - Ensure proper contrast for mathematical expressions
+## Implementation Timeline
 
-- **Layout Improvements**
-  - Create resizable panels for transcript/board sections
-  - Add options to hide/show different panels
-  - Implement responsive design (prioritizing desktop)
+1. **Week 1**: Audio preprocessing and Whisper optimization
+2. **Week 2**: Summary generation implementation
+3. **Week 3**: Integration, testing, and refinement
 
-## 5. Export & Integration Features (Low Priority)
+## Success Metrics
 
-- **Export Options**
-  - Add PDF export with proper LaTeX rendering
-  - Create Markdown export for note-taking applications
-  - Implement structured JSON export for programmatic use
-
-- **Note-Taking**
-  - Add simple note-taking capability alongside lecture content
-  - Create timestamp-anchored annotations
-  - Implement basic formatting options for notes
+- Reduction in word error rate by at least 30%
+- Elimination of repetitive phrases
+- Complete and accurate technical term transcription
+- Informative summaries that capture key concepts
+- Robust error recovery

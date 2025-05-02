@@ -10,13 +10,35 @@
   margin-left: 20px; /* Add margin to move away from left edge */
 }
 
-.transcript-viewer h2 {
-  padding: 1rem;
+.viewer-header {
+  padding: 0.75rem 1rem;
   background-color: #3498db;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viewer-header h2 {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 500;
+}
+
+.toggle-view-button {
+  background-color: white;
+  color: #3498db;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.toggle-view-button:hover {
+  background-color: #f0f7ff;
 }
 
 .transcript-segments {
@@ -58,6 +80,25 @@
   line-height: 1.5;
   white-space: pre-wrap;
   margin-bottom: 1rem;
+}
+
+.segment-summary {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.summary-content {
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #3498db;
+}
+
+.no-summary {
+  font-style: italic;
+  color: #999;
+  padding: 0.5rem;
 }
 
 .copy-button {

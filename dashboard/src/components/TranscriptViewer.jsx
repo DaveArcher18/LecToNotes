@@ -1,10 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { formatTimestamp } from '../utils/dataLoader';
 import './TranscriptViewer.css';
 
 const TranscriptViewer = ({ segments, currentTime, currentSegment, onTimeChange }) => {
   const segmentsRef = useRef(null);
   const activeSegmentRef = useRef(null);
+  const [viewMode, setViewMode] = useState('transcript'); // 'transcript' or 'summary'
 
   // Handle clicking on a transcript segment
   const handleSegmentClick = (segmentStartTime) => {
@@ -21,9 +22,22 @@ const TranscriptViewer = ({ segments, currentTime, currentSegment, onTimeChange 
     }
   }, [currentSegment]);
 
+  // Toggle between transcript and summary view
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'transcript' ? 'summary' : 'transcript');
+  };
+
   return (
     <div className="transcript-viewer">
-      <h2>Lecture Transcript</h2>
+      <div className="viewer-header">
+        <h2>Lecture {viewMode === 'transcript' ? 'Transcript' : 'Summary'}</h2>
+        <button 
+          className="toggle-view-button"
+          onClick={toggleViewMode}
+        >
+          Show {viewMode === 'transcript' ? 'Summary' : 'Transcript'}
+        </button>
+      </div>
       <div className="transcript-segments" ref={segmentsRef}>
         {segments.map((segment, index) => (
           <div 
@@ -35,15 +49,30 @@ const TranscriptViewer = ({ segments, currentTime, currentSegment, onTimeChange 
             <div className="segment-time">
               {formatTimestamp(segment.start)} - {formatTimestamp(segment.end)}
             </div>
-            <div className="segment-content">
-              {segment.content || 'No transcript available'}
-            </div>
+            {viewMode === 'transcript' ? (
+              <div className="segment-content">
+                {segment.content || 'No transcript available'}
+              </div>
+            ) : (
+              <div className="segment-summary">
+                {segment.summary ? (
+                  <div>
+                    <div className="summary-content">{segment.summary}</div>
+                  </div>
+                ) : (
+                  <div className="no-summary">No summary available</div>
+                )}
+              </div>
+            )}
             <button 
               className="copy-button" 
               onClick={(e) => {
                 e.stopPropagation();
-                navigator.clipboard.writeText(segment.content || '');
-                alert('Transcript copied to clipboard!');
+                const textToCopy = viewMode === 'transcript' ? 
+                  (segment.content || '') : 
+                  (segment.summary || '');
+                navigator.clipboard.writeText(textToCopy);
+                alert(`${viewMode === 'transcript' ? 'Transcript' : 'Summary'} copied to clipboard!`);
               }}
             >
               Copy Text

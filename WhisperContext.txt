@@ -1,3 +1,75 @@
-This is Peter Scholze's lecture on Habiro Cohomology, here are some technical terms that appear: Habiro cohomology, Habiro ring, q-de Rham, prismatic cohomology, etale cohomology, Nygaard filtration,
-Berkovich space, perfectoid space, syntomic cohomology, A-Omega, Witt vectors, Tate module,
-Bloch group, Frobenius endomorphism.
+This is a mathematics lecture on advanced topics in algebraic geometry and cohomology theory. The following specialized terms are likely to appear:
+
+MATHEMATICAL FIELDS:
+- Algebraic geometry
+- Cohomology theory
+- Algebraic topology
+- Category theory
+- Homological algebra
+- Number theory
+- Prismatic cohomology
+- Crystalline cohomology
+
+SPECIALIZED TERMS:
+- Habiro cohomology
+- Habiro rings
+- Q-series
+- Perturbative Chern-Simons theory
+- Q-deformation
+- Prismatic
+- de Rham cohomology
+- Étale cohomology
+- Crystalline cohomology
+- Betti cohomology
+- Frobenius
+- Grothendieck
+- Fontaine
+- Sheaves
+- Categorical Künneth formula
+- Six-factor formalism
+- Weil cohomology
+- Derived category
+- P-adic Hodge theory
+- Galois action
+- Hodge filtration
+- Berkovich spaces
+- Legendre family
+- Elliptic curves
+- Hypergeometric function
+- Gauss-Manin connection
+- Wagner's theorem
+- Schemes
+- Derived algebraic geometry
+- Arithmetic geometry
+- Topological K-theory
+
+MATHEMATICIANS:
+- Grothendieck
+- Fontaine
+- Scholze
+- Bhatt
+- Faltings
+- Tsuji
+- Karou
+- Berthelot
+- Garofaldis
+- Zagier
+- Shirai
+- Wagner
+
+NOTATION:
+- Spec Z
+- A^n
+- X/R (X over R)
+- H^i (cohomology groups)
+- Z_p (p-adic integers)
+- Q_p (p-adic numbers)
+- F_p (finite field)
+- Z/nZ (integers modulo n)
+- [n]_q (q-bracket)
+- H^i_dR (de Rham cohomology)
+- H^i_et (étale cohomology)
+- H^i_crys (crystalline cohomology)
+- B_crys (Fontaine's crystalline period ring)
+
+This is an academic lecture delivered in English with occasional mathematical notation written on a blackboard.
