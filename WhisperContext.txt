@@ -26,7 +26,7 @@ SPECIALIZED TERMS:
 - Fontaine
 - Sheaves
 - Categorical Künneth formula
-- Six-factor formalism
+- Six-functor formalism
 - Weil cohomology
 - Derived category
 - P-adic Hodge theory
@@ -55,7 +55,7 @@ MATHEMATICIANS:
 - Garofaldis
 - Zagier
 - Shirai
-- Wagner
+- Ferdinand Wagner
 
 NOTATION:
 - Spec Z

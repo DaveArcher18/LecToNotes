@@ -1,0 +1,122 @@
+[
+  {
+    "start": "00_00_00",
+    "end": "00_05_00",
+    "content": "This is related but different from the Sabiro stuff I was talking about last term. So last term, the title was, have you ever been to a numbers field? You don't have to know what they are, and sometimes I didn't really discuss them all that much in the course. So I will talk to you in a moment if you recall what they are. So are you running an argument on purpose? Sorry, I'm getting... Thanks. So there are basically two sides to this story, and on the left I will put some of the things from last term and the right from this term. So for me the motivation in defining these things was some expectations starting from around 2017 or so that there is some such a miracle in cohomology. And I will use this lecture to explain what I mean by this. And these Sabiro rings of numbers fields are basically the zero-dimensional case. Your variety is just a bunch of points in some sense. Then you get Sabiro rings of numbers fields. So there is some kind of abstract idea of what these things should be. And last time I was talking about something much more concrete. So there were certain Q-Series related to perturbative transformers theory, whatever that is. But these Q-Series were completely explicit, and so they were having a very explicit approach which actually defines elements in there. So the abstract approach produces the ring or the module. This concrete approach will produce two elements in there. And this abstract side also got started maybe a little later, someone coming from computations that Gavr Faldides and Zagir did. And then somehow we talked to each other and realized that there is this interesting common object of interest, and this led to our paper. And at that time I was actually thinking that I didn't believe in this expectation anymore. But then they found elements in there and just revived this expectation. And then my student, Fagin and Wagner, tried to see whether such a thing exists. And at first his master's thesis proved no, but now his PhD thesis proves yes. So it's a very confusing state of affairs, and part of the goals, of course, is to somehow understand what's going on. Although that will still be confusing. So this was somehow this half of the last term. And there have been also some developments that somehow bring these two sides, which so far just gave rise to one common object. These sides seem to converge more, and maybe or maybe not I will say something about what's happening with the relation between these two sides. But mostly these are disjoint things that just happen to overlap in certain objects. So for this reason you don't...",
+    "summary": "Here is a two-paragraph summary of the transcript segment:\n\nThe lecture discusses the connection between two approaches to understanding certain algebraic structures. The first approach, related to Sabiro rings of number fields, is an abstract method that produces a ring or module. This approach is motivated by expectations in cohomology, which were revived by the discovery of explicit elements in these structures. The second approach, which was discussed in a previous course, involves concrete Q-series related to perturbative topological field theory. These two approaches, though distinct, have converged in recent developments, leading to a deeper understanding of the underlying algebraic objects.\n\nAdded motivation: The significance of these concepts lies in their potential to reveal deeper connections between cohomology and topological field theory. The abstract approach, rooted in cohomological expectations, has led to the discovery of explicit elements, which in turn have revived interest in the field. The convergence of the two approaches has important implications for our understanding of the algebraic structures underlying these theories. The ongoing research in this area, as exemplified by the speaker's student's PhD thesis, continues to shed light on the intricate relationships between these mathematical objects, driving the field forward."
+  },
+  {
+    "start": "00_05_00",
+    "end": "00_10_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_10_00",
+    "end": "00_15_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_15_00",
+    "end": "00_20_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_20_00",
+    "end": "00_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_25_00",
+    "end": "00_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_30_00",
+    "end": "00_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_35_00",
+    "end": "00_40_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_40_00",
+    "end": "00_45_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_45_00",
+    "end": "00_50_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_50_00",
+    "end": "00_55_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_55_00",
+    "end": "01_00_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_00_00",
+    "end": "01_05_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_05_00",
+    "end": "01_10_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_10_00",
+    "end": "01_15_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_15_00",
+    "end": "01_20_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_20_00",
+    "end": "01_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_25_00",
+    "end": "01_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_30_00",
+    "end": "01_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_35_00",
+    "end": "01_40_00",
+    "content": "",
+    "summary": ""
+  }
+]
