@@ -1,124 +1,132 @@
 # LecToNotes
 
-LecToNotes is a software package for extracting text resources from technical research mathematics lecture videos. It processes both the spoken audio and blackboard content, converting them into structured JSON data for easy downstream display and analysis.
+LecToNotes is a software package for extracting text resources from technical research mathematics lecture videos. It processes both the spoken audio and blackboard content, converting them into structured JSON data that can be viewed through a web-based dashboard.
 
-## Overview
+## 📋 Prerequisites
 
-The system extracts two primary types of content from lecture videos:
+Before getting started, make sure you have the following installed:
 
-1. **Spoken Transcript**: The audio is transcribed into text using either local Whisper or Groq's API.
-2. **Blackboard Content**: Screenshots of the blackboard are captured, deduplicated, and converted to LaTeX using an LLM-based OCR system.
+- **Python 3.8+**
+- **Node.js 18+** (for the dashboard)
+- **FFmpeg** (for audio processing)
+- API keys for:
+  - **Groq** (optional, for enhanced transcription)
+  - **OpenRouter** (required for OCR processing)
 
-These resources are then merged into a unified JSON structure that organizes the lecture content into time-segmented blocks.
+## 🚀 Quick Start
 
-## System Components
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/DaveArcher18/LecToNotes.git
+   cd LecToNotes
+   ```
 
-### Core Scripts
+2. **Set up API keys**
+   Create a `.env` file in the root directory with the following content:
+   ```
+   GROQ_API_KEY=your_groq_api_key_here
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   ```
 
-- `get_boards.py`: Extracts and deduplicates blackboard images from lecture videos
-- `get_transcript.py`: Transcribes audio from lecture videos using Whisper or Groq
-- `LLM_OCR.py`: Converts blackboard images to LaTeX using LLM-based OCR
-- `merge/unified_merge.py`: Merges board content and transcript into a unified structure
+3. **Install dependencies**
+   ```bash
+   make install_deps
+   ```
+   This installs both Python and Node.js dependencies.
 
-### Output Files
+4. **Process a video**
+   ```bash
+   make process_video VIDEO=/path/to/lecture.mp4 TITLE="Linear Algebra Lecture 1"
+   ```
+   This command will:
+   - Extract transcript from the video
+   - Extract board images
+   - Process board images with OCR
+   - Copy the results to the dashboard
+   - Launch the dashboard web interface
 
-- `boards.json`: Contains timestamped blackboard images and their LaTeX transcriptions
-- `transcript.json`: Contains timestamped segments of the lecture transcript
-- `merge/lecture.json`: The final unified representation of the lecture content
+5. **Access the dashboard**
+   The dashboard will automatically launch at http://localhost:5173
 
-## Installation
+## 🔧 Detailed Setup
+
+### Python Dependencies
+
+The project requires several Python packages. Use the following commands to install them:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/LecToNotes.git
-cd LecToNotes
+# Option 1: Install using make
+make install_deps
 
+# Option 2: Install directly with pip
+pip install -r requirements.txt
+```
+
+Key dependencies include:
+- **numpy, opencv-python, scikit-image**: For image processing
+- **ffmpeg-python, pydub**: For audio processing
+- **whisper**: For local transcription (optional)
+- **groq**: For cloud-based transcription (optional)
+- **librosa, soundfile**: For audio preprocessing (optional)
+- **yt-dlp**: For YouTube video downloading
+- **tensorflow**: For enhanced board detection (optional)
+
+### API Keys
+
+The system uses two API services:
+
+1. **OpenRouter API** (required for OCR):
+   - Sign up at [OpenRouter](https://openrouter.ai/)
+   - Get your API key from the dashboard
+   - Add it to your `.env` file: `OPENROUTER_API_KEY=your_key_here`
+
+2. **Groq API** (optional, for enhanced transcription):
+   - Sign up at [Groq](https://groq.com/)
+   - Get your API key from the dashboard
+   - Add it to your `.env` file: `GROQ_API_KEY=your_key_here`
+
+### Dashboard Setup
+
+The dashboard is automatically set up when you run `make process_video`. If you want to set it up manually:
+
+```bash
 # Install dependencies
-uv pip install -r requirements.txt
+cd dashboard
+npm install
+
+# Start the development server
+npm run dev
 ```
 
-## Usage
+## 📚 Using the Makefile
 
-### Complete Pipeline
+The project includes a comprehensive Makefile that automates the entire lecture processing pipeline.
 
-The complete pipeline can be run using the provided Makefile:
+### Main Commands
 
-```bash
-# Process a lecture video (extracts boards, transcript, and merges them)
-make process VIDEO=path/to/lecture.mp4 TITLE="Lecture Title" DATE=YYYY-MM-DD
-```
+- **Process a complete video**:
+  ```bash
+  make process_video VIDEO=/path/to/lecture.mp4 TITLE="Lecture Title"
+  ```
 
-## Makefile Guide
+- **Install all dependencies**:
+  ```bash
+  make install_deps
+  ```
 
-The project includes a comprehensive Makefile that automates the entire lecture processing pipeline. This makes it easy to process videos with a single command or run individual steps as needed.
+- **Clean up all generated files**:
+  ```bash
+  make clean
+  ```
 
-### Makefile Structure
+- **Show help information**:
+  ```bash
+  make help
+  ```
 
-The Makefile defines several targets that correspond to different stages of the processing pipeline:
+### Individual Pipeline Steps
 
-- `process`: Runs the complete pipeline (transcript extraction, board extraction, OCR, and merging)
-- `extract_transcript`: Extracts the transcript from the video
-- `extract_boards`: Extracts blackboard images from the video
-- `ocr_boards`: Processes the extracted board images with OCR
-- `merge`: Merges the transcript and board content into a unified structure
-- `clean`: Removes all generated files
-- `help`: Displays help information about the Makefile
-
-### Key Parameters
-
-The Makefile accepts several parameters that control the processing:
-
-- `VIDEO`: Path to the input video file (required)
-- `TITLE`: Title of the lecture (default: "Untitled Lecture")
-- `DATE`: Date of the lecture in YYYY-MM-DD format (optional)
-- `INTERVAL`: Time interval for segmentation in seconds (default: 300)
-- `USE_GROQ`: Whether to use Groq API for transcription (true/false, default: false)
-
-### Output Structure
-
-All output files are stored in a directory named `<TITLE> OUTPUT`, with the following structure:
-
-```
-<TITLE> OUTPUT/
-├── transcript.json         # Extracted transcript
-├── boards/                 # Directory containing board images
-│   ├── board_*.jpg         # Extracted board images
-│   └── boards.json         # Metadata for board images
-└── merge/                  # Directory containing merged content
-    └── lecture.json        # Final unified lecture content
-```
-
-### Example Usage
-
-#### Basic Usage
-
-```bash
-# Process a local video file
-make process VIDEO=/path/to/lecture.mp4 TITLE="Linear Algebra Lecture 1"
-```
-
-#### Processing a YouTube Video
-
-```bash
-# Process a YouTube video
-make process VIDEO="https://youtube.com/watch?v=VIDEO_ID" TITLE="Calculus Lecture 2" DATE="2023-09-15"
-```
-
-#### Using Groq API for Transcription
-
-```bash
-# Process a video using Groq API for transcription
-make process VIDEO=/path/to/lecture.mp4 TITLE="Quantum Mechanics" USE_GROQ=true
-```
-
-#### Customizing Segment Interval
-
-```bash
-# Process a video with custom segment interval (10 minutes)
-make process VIDEO=/path/to/lecture.mp4 TITLE="Statistics" INTERVAL=600
-```
-
-#### Running Individual Steps
+You can also run individual steps of the pipeline:
 
 ```bash
 # Extract transcript only
@@ -127,69 +135,58 @@ make extract_transcript VIDEO=/path/to/lecture.mp4 TITLE="Physics Lecture"
 # Extract board images only
 make extract_boards VIDEO=/path/to/lecture.mp4 TITLE="Chemistry Lecture"
 
-# Process board images with OCR (after extraction)
+# Process board images with OCR
 make ocr_boards TITLE="Chemistry Lecture"
 
-# Merge transcript and boards (after extraction and OCR)
-make merge TITLE="Chemistry Lecture" DATE="2023-10-20"
+# Launch the dashboard
+make launch_dashboard
 ```
 
-#### Cleaning Generated Files
+### Processing YouTube Videos
+
+You can directly process videos from YouTube:
 
 ```bash
-# Remove all generated files for a specific lecture
-make clean TITLE="Linear Algebra Lecture 1"
+make process_video VIDEO="https://youtube.com/watch?v=VIDEO_ID" TITLE="Calculus Lecture"
 ```
 
-For more information about the Makefile, run `make help` to display the built-in help message.
+### Using Groq for Transcription
 
-### Individual Components
-
-Alternatively, you can run each component separately:
-
-> **Important Note**: When using YouTube URLs as input, you must run `get_transcript.py` first, as it handles YouTube video downloading. The downloaded video can then be used as input for `get_boards.py`.
-
-#### 1. Generate Transcript
+For enhanced transcription quality, you can use Groq's API:
 
 ```bash
-# Using local Whisper (with local mp4 file)
-python get_transcript.py path/to/lecture.mp4 --out transcript.json
-
-# Using local Whisper (with YouTube URL)
-python get_transcript.py https://youtube.com/watch?v=VIDEO_ID --out transcript.json
-
-# Using Groq API
-python get_transcript.py path/to/lecture.mp4 --use-groq --out transcript.json
+make process_video VIDEO=/path/to/lecture.mp4 TITLE="Quantum Mechanics" USE_GROQ=true
 ```
 
-#### 2. Extract Blackboard Images
+## 📊 Output Structure
 
-```bash
-python get_boards.py -i path/to/lecture.mp4 -o boards/
-```
-
-#### 3. Process Blackboard Images with OCR
-
-```bash
-python LLM_OCR.py boards/boards.json
-```
-
-#### 4. Merge Boards and Transcript
-
-```bash
-python merge/unified_merge.py -b boards/boards.json -t transcript.json -o merge/lecture.json --title "Lecture Title" --date YYYY-MM-DD
-```
-
-## Environment Variables
-
-Create a `.env` file with the following API keys:
+All output files are stored in a directory named `<TITLE> OUTPUT`, with the following structure:
 
 ```
-GROQ_API_KEY=your_groq_api_key_here
-OPENROUTER_API_KEY=your_openrouter_api_key_here
+<TITLE> OUTPUT/
+├── transcript.json         # Extracted transcript with summaries
+└── boards/                 # Directory containing board images
+    ├── board_*.jpg         # Extracted board images
+    └── boards.json         # Metadata for board images with LaTeX transcriptions
 ```
 
-## Output Format
+The dashboard reads data from `dashboard/public/OUTPUT/`, which is automatically populated by `make process_video`.
+
+## 📋 Output Format
+
+### transcript.json
+
+```json
+[
+  {
+    "start": "00_00_00",
+    "end": "00_05_00",
+    "content": "Welcome to today's lecture on Habiro Cohomology...",
+    "summary": "This segment introduces the concept of Habiro Cohomology..."
+  },
+  ...
+]
+```
 
 ### boards.json
 
@@ -204,47 +201,26 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 ]
 ```
 
-### transcript.json
+## 🔍 Troubleshooting
 
-```json
-[
-  {
-    "start": "00_00_00",
-    "end": "00_05_00",
-    "content": "Welcome to today's lecture on Habiro Cohomology..."
-  },
-  ...
-]
-```
+- **Error: API key not found**
+  - Make sure you've created a `.env` file with the required API keys
+  - Check that the API keys are correctly formatted with no spaces
 
-### lecture.json
+- **Error: ImportError: No module named 'whisper'**
+  - Run `make install_deps` to install all required dependencies
+  - Alternatively, install whisper manually: `pip install -U openai-whisper`
 
-```json
-{
-  "lecture": "Habiro Cohomology – Lecture 1",
-  "date": "2025-04-24",
-  "segments": [
-    {
-      "start_time": "00:00:00",
-      "end_time": "00:05:00",
-      "spoken_content": "Welcome to today's lecture...",
-      "written_content": [
-        {
-          "timestamp": "00_03_24",
-          "path": "boards/board_00_03_24_000.jpg",
-          "text": "\\begin{center}\nNo Lecture next two weeks...\\end{center}"
-        }
-      ]
-    },
-    ...
-  ]
-}
-```
+- **Error: FFmpeg not found**
+  - Install FFmpeg: 
+    - macOS: `brew install ffmpeg`
+    - Ubuntu: `sudo apt install ffmpeg`
+    - Windows: Download from [FFmpeg website](https://ffmpeg.org/download.html)
 
-## Dependencies
+- **Dashboard shows empty content**
+  - Check that files were correctly copied to `dashboard/public/OUTPUT/`
+  - Verify there are no errors in the browser console
 
-See `requirements.txt` for a complete list of dependencies.
-
-## License
+## 📄 License
 
 [MIT](LICENSE)

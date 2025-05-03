@@ -11,6 +11,7 @@ import pickle
 from pathlib import Path
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
+import datetime
 
 load_dotenv()
 
@@ -20,12 +21,11 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
-# Update to Llama 4 Maverick for OCR
+# Keep Llama 4 Maverick for initial OCR from images
 OCR_MODEL = "meta-llama/llama-4-maverick:free"
-# Keep using Qwen3 for refinement (good at LaTeX cleanup)
-REFINER_MODEL = "qwen/qwen3-14b:free"
-# Final validator for LaTeX syntax
-VALIDATOR_MODEL = "meta-llama/llama-4-maverick:free"
+# Use deepseek-prover-v2 for all refinements
+REFINER_MODEL = "deepseek/deepseek-prover-v2:free"
+VALIDATOR_MODEL = "deepseek/deepseek-prover-v2:free"
 THROTTLETIME = 0 
 
 # Common mathematical structure patterns to validate
@@ -128,8 +128,70 @@ def encode_image_to_data_uri(img):
     b64 = base64.b64encode(buffer).decode("utf-8")
     return f"data:image/jpeg;base64,{b64}"
 
-def extract_latex_with_ocr(image_data_uri):
-    """First pass: Extract raw content from image using Llama 4 Maverick."""
+def find_relevant_transcript_context(timestamp, transcript_data):
+    """
+    Given a timestamp from a board, find relevant context from the transcript.
+    Returns both relevant transcript segment and summaries.
+    """
+    if not transcript_data:
+        return None, None
+    
+    # Convert timestamp to seconds for easier comparison
+    if isinstance(timestamp, str) and '_' in timestamp:
+        # Format: "HH_MM_SS"
+        parts = timestamp.split('_')
+        if len(parts) >= 3:
+            hour = int(parts[0])
+            minute = int(parts[1])
+            second = int(parts[2]) if parts[2] else 0
+            timestamp_seconds = hour * 3600 + minute * 60 + second
+        else:
+            return None, None
+    else:
+        return None, None
+    
+    # Find the relevant segment in the transcript
+    current_segment = None
+    previous_segment = None
+    next_segment = None
+    all_summaries = []
+    
+    for segment in transcript_data:
+        # Extract start and end times
+        start_parts = segment["start"].split('_')
+        end_parts = segment["end"].split('_')
+        
+        start_seconds = int(start_parts[0]) * 3600 + int(start_parts[1]) * 60 + int(start_parts[2])
+        end_seconds = int(end_parts[0]) * 3600 + int(end_parts[1]) * 60 + int(end_parts[2])
+        
+        # Add summary to all summaries if available
+        if "summary" in segment and segment["summary"].strip():
+            all_summaries.append(segment["summary"])
+        
+        # Check if timestamp falls within this segment
+        if start_seconds <= timestamp_seconds < end_seconds:
+            current_segment = segment
+        elif end_seconds <= timestamp_seconds and (next_segment is None or end_seconds > next_segment_start_seconds):
+            previous_segment = segment
+        elif timestamp_seconds < start_seconds and (next_segment is None or start_seconds < next_segment_start_seconds):
+            next_segment = segment
+            next_segment_start_seconds = start_seconds
+    
+    # Create context from the segments
+    context = ""
+    if current_segment:
+        context = f"Current segment ({current_segment['start']} to {current_segment['end']}):\n{current_segment['content']}\n\n"
+    
+    if previous_segment:
+        context += f"Previous segment ({previous_segment['start']} to {previous_segment['end']}):\n{previous_segment['content']}\n\n"
+    
+    if next_segment:
+        context += f"Next segment ({next_segment['start']} to {next_segment['end']}):\n{next_segment['content']}"
+    
+    return context, all_summaries
+
+def extract_latex_with_ocr(image_data_uri, transcript_context=None, summaries=None):
+    """First pass: Extract raw content from image using Llama 4 Maverick with transcript context."""
     ocr_system_prompt = """You are an expert mathematics OCR system specializing in extracting LaTeX from blackboard images of advanced mathematics lectures.
 
 CONTEXT: These images come from lectures on topics like Habiro cohomology, arithmetic geometry, p-adic Hodge theory, and other advanced mathematics.
@@ -168,24 +230,63 @@ YOUR TASK: Convert the blackboard content into precise, properly formatted LaTeX
 IMPORTANT: Focus on accurately transcribing the mathematical content rather than interpreting or explaining it. Preserve all mathematical symbols exactly as they appear.
 """
 
+    user_content = [
+        {"type": "text", "text": "Transcribe the mathematical content from this blackboard image into precise LaTeX/Markdown."},
+        {"type": "image_url", "image_url": {"url": image_data_uri}}
+    ]
+    
+    # Add transcript context if available
+    if transcript_context:
+        context_text = f"""
+I am providing you with relevant transcript segments from the lecture to help you understand the context of what's being discussed on the blackboard. 
+This should help you accurately interpret the mathematical notation and terminology:
+
+{transcript_context}
+        """
+        user_content[0]["text"] += "\n\n" + context_text
+        
+    # Add lecture summaries if available
+    if summaries and len(summaries) > 0:
+        summaries_text = "\nSUMMARIES OF LECTURE CONTENT:\n"
+        for i, summary in enumerate(summaries[:3]):  # Use up to 3 summaries to avoid context length issues
+            summaries_text += f"Summary {i+1}:\n{summary}\n\n"
+        user_content[0]["text"] += "\n" + summaries_text
+
     ocr_messages = [
         {"role": "system", "content": ocr_system_prompt},
-        {"role": "user", "content": [
-            {"type": "text", "text": "Transcribe the mathematical content from this blackboard image into precise LaTeX/Markdown."},
-            {"type": "image_url", "image_url": {"url": image_data_uri}}
-        ]}
+        {"role": "user", "content": user_content}
     ]
     
     return call_openrouter_api(ocr_messages, OCR_MODEL, temperature=0.1, max_tokens=1500)
 
-def structure_latex_content(raw_text):
-    """Second pass: Structure the raw content into proper LaTeX environments."""
+def structure_latex_content(raw_text, transcript_context=None, summaries=None):
+    """Second pass: Structure the raw content into proper LaTeX environments with transcript context."""
+    
+    # Include context in the prompt if available
+    context_section = ""
+    if transcript_context:
+        context_section = f"""
+LECTURE CONTEXT:
+{transcript_context}
+
+Use this context to help you understand the mathematical terminology and notation, but focus on structuring the raw extracted content.
+"""
+    
+    # Include summaries in the prompt if available
+    summaries_section = ""
+    if summaries and len(summaries) > 0:
+        summaries_section = "\nLECTURE SUMMARIES:\n"
+        for i, summary in enumerate(summaries[:2]):  # Use up to 2 summaries to avoid context length issues
+            summaries_section += f"Summary {i+1}:\n{summary}\n\n"
+    
     structure_prompt = f"""You are an expert LaTeX formatter specializing in mathematical notation. Your task is to take the raw mathematical content extracted from a blackboard and structure it into proper LaTeX environments.
 
 Raw extracted content:
 ```
 {raw_text}
 ```
+{context_section}
+{summaries_section}
 
 Please transform this into well-structured LaTeX by:
 
@@ -203,25 +304,39 @@ Specifically:
 - Replace \\\\section{{}} and \\\\subsection{{}} with markdown ## and ### respectively
 - Ensure all \\\\begin{{environment}} have matching \\\\end{{environment}}
 - Fix any mismatched $$...$ or $...$$
+- Use the context provided to correctly identify mathematical symbols and terminology
+- Make sure to preserve mathematical meaning while improving formatting
 
 OUTPUT ONLY the structured LaTeX content with no explanation or commentary.
 """
 
     structure_messages = [
-        {"role": "system", "content": "You are an expert LaTeX formatter."},
+        {"role": "system", "content": "You are an expert LaTeX formatter specializing in advanced mathematics."},
         {"role": "user", "content": structure_prompt}
     ]
     
     return call_openrouter_api(structure_messages, REFINER_MODEL, temperature=0.1)
 
-def validate_latex_syntax(structured_text):
-    """Third pass: Validate and correct LaTeX syntax."""
-    validation_prompt = f"""You are an expert LaTeX validator. Your task is to check the following mathematical content for LaTeX syntax errors and correct them.
+def validate_latex_syntax(structured_text, transcript_context=None):
+    """Third pass: Validate and correct LaTeX syntax with transcript context."""
+    
+    # Include context in the prompt if available
+    context_section = ""
+    if transcript_context:
+        context_section = f"""
+LECTURE CONTEXT:
+{transcript_context}
+
+Use this context to help you understand the mathematical terminology, but focus on validating the LaTeX syntax.
+"""
+    
+    validation_prompt = f"""You are an expert LaTeX validator specializing in advanced mathematics. Your task is to check the following mathematical content for LaTeX syntax errors and correct them.
 
 Content to validate:
 ```
 {structured_text}
 ```
+{context_section}
 
 Please focus on these specific issues:
 1. Check that all LaTeX environments are properly opened and closed
@@ -234,6 +349,7 @@ Please focus on these specific issues:
 8. Replace \\section{{...}} with ## ... and \\subsection{{...}} with ### ...
 9. Ensure inline math formulas use single $ and display formulas use $$
 10. Fix any LaTeX commands that are incorrectly escaped (e.g., \\\\mathbb should be \\mathbb)
+11. Ensure mathematical notation consistency with the lecture context
 
 Common patterns to fix:
 - Replace _2 with _{{2}}
@@ -242,12 +358,13 @@ Common patterns to fix:
 - Replace \\\\begin with \\begin
 - Replace \\\\end with \\end
 - Fix any improperly closed environments
+- Correct mathematical terminology based on the lecture context
 
 Return ONLY the corrected content without any explanations.
 """
 
     validation_messages = [
-        {"role": "system", "content": "You are an expert LaTeX syntax validator."},
+        {"role": "system", "content": "You are an expert LaTeX syntax validator and mathematics specialist."},
         {"role": "user", "content": validation_prompt}
     ]
     
@@ -334,32 +451,55 @@ def get_ocr_optimized_image(image_path_or_array):
     ocr_img = optimize_image_for_ocr(image_path_or_array)
     return ocr_img
 
-def multi_stage_ocr_process(image_path_or_array):
+def load_transcript_data(transcript_path):
+    """Load transcript data from a JSON file."""
+    if not transcript_path or not os.path.exists(transcript_path):
+        print(f"Warning: Transcript file {transcript_path} not found.")
+        return None
+    
+    try:
+        with open(transcript_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading transcript data: {e}")
+        return None
+
+def multi_stage_ocr_process(image_path_or_array, transcript_data=None, timestamp=None):
     """
-    Implement the multi-stage OCR pipeline.
+    Implement the multi-stage OCR pipeline with transcript context.
     Can accept either a file path or a pre-loaded image array.
     """
     # Step 1: Get OCR-optimized image
     img_proc = get_ocr_optimized_image(image_path_or_array)
     data_uri = encode_image_to_data_uri(img_proc)
     
-    # Step 2: First pass OCR with Llama 4 Maverick
+    # Step 2: Get relevant transcript context if available
+    transcript_context = None
+    summaries = None
+    if transcript_data and timestamp:
+        transcript_context, summaries = find_relevant_transcript_context(timestamp, transcript_data)
+        if transcript_context:
+            print("Found relevant transcript context for this board.")
+        if summaries:
+            print(f"Using {min(len(summaries), 3)} lecture summaries to enhance context.")
+    
+    # Step 3: First pass OCR with Llama 4 Maverick
     print("Extracting raw content...")
-    raw_text = extract_latex_with_ocr(data_uri)
+    raw_text = extract_latex_with_ocr(data_uri, transcript_context, summaries)
     
     # Skip further processing if illegible
     if raw_text.strip() == "%illegible":
         return "%illegible"
     
-    # Step 3: Structure the content
+    # Step 4: Structure the content with DeepSeek Prover
     print("Structuring content...")
-    structured_text = structure_latex_content(raw_text)
+    structured_text = structure_latex_content(raw_text, transcript_context, summaries)
     
-    # Step 4: Validate LaTeX syntax
+    # Step 5: Validate LaTeX syntax with DeepSeek Prover
     print("Validating LaTeX syntax...")
-    validated_text = validate_latex_syntax(structured_text)
+    validated_text = validate_latex_syntax(structured_text, transcript_context)
     
-    # Step 5: Enhanced postprocessing
+    # Step 6: Enhanced postprocessing
     print("Final postprocessing...")
     final_text = enhanced_postprocess_text(validated_text)
     
@@ -381,8 +521,16 @@ def check_for_ocr_data(json_path):
     
     return None
 
-def process_boards_json(json_path):
-    """Process all boards in a JSON file."""
+def process_boards_json(json_path, transcript_path=None):
+    """Process all boards in a JSON file with optional transcript context."""
+    # Load transcript data if provided
+    transcript_data = None
+    if transcript_path:
+        print(f"Loading transcript data from {transcript_path}...")
+        transcript_data = load_transcript_data(transcript_path)
+        if transcript_data:
+            print(f"Loaded {len(transcript_data)} transcript segments.")
+        
     # Check if we have OCR-optimized data
     ocr_data = check_for_ocr_data(json_path)
     
@@ -480,11 +628,12 @@ def process_boards_json(json_path):
         
         # Process the image and get the LaTeX text
         processed_count += 1
-        print(f"Processing image {processed_count}/{len(entries_to_process)} (entry {i+1}/{total_entries}): {os.path.basename(board['path'])}")
+        timestamp = board.get('timestamp')
+        print(f"Processing image {processed_count}/{len(entries_to_process)} (entry {i+1}/{total_entries}): {os.path.basename(board['path'])} at timestamp {timestamp}")
         
         try:
-            # Use the multi-stage OCR process
-            latex_text = multi_stage_ocr_process(ocr_input)
+            # Use the multi-stage OCR process with transcript context
+            latex_text = multi_stage_ocr_process(ocr_input, transcript_data, timestamp)
             
             # Add the text field to the board entry
             board['text'] = latex_text
@@ -494,24 +643,8 @@ def process_boards_json(json_path):
             with open(json_path, 'w') as f:
                 json.dump(boards_data, f, indent=2)
             print(f"Saved progress to {json_path} after processing image {processed_count}/{len(entries_to_process)}")
-        except Exception as e:
-            # If there's an error processing this image, mark it as an error but don't crash
-            error_msg = f"%error: {str(e)}"
-            print(f"Error processing image: {error_msg}")
             
-            # Mark the entry with the error
-            board['text'] = error_msg
-            
-            # Save the progress so far
-            with open(json_path, 'w') as f:
-                json.dump(boards_data, f, indent=2)
-            print(f"Saved error state to {json_path}")
-    
-    if processed_count == 0:
-        print(f"\nNo new entries to process. All {total_entries} entries already have text.")
-    else:
-        print(f"\nProcessing complete. Processed {processed_count} new entries in {json_path}.")
-        print(f"Total entries: {total_entries}, Previously processed: {skipped_entries}, Newly processed: {processed_count}")
+            # Ad
 
 def main():
     parser = argparse.ArgumentParser(
