@@ -1,0 +1,122 @@
+[
+  {
+    "start": "00_00_00",
+    "end": "00_05_00",
+    "content": "I'd like to give you a little bit of an analysis about this Hanviro cohomology, and ideally you would like to associate to NEX, which may be for simplicity, say, smooth scheme with integers, this should have some Hanviro cohomology. Which should be some module, or a graded module, for a value array, but really we would like to have something really more. So when I discussed cohomology series last time, I was emphasising that each of these really also comes with some category of coefficients, or constructable sheaves, or something. So we would also have some kind of, I don't know what to call this, but some kind of derived category. And for lack of a better name, I would prefer to use these as variations for a Neurohomus structure, but some kind of derived category associated to NEX, giving you the sheave series for this notion of a Neurohomology. And what I would like to start with in this first video lecture is to explain what these structures should be in coordinates. And it turns out that if you choose coordinates on X, these things have very simple definitions, and the whole mystery is why these objects turn out to be independent of the choice of coordinates. And in fact, so what I mean by coordinates... ...named a tau map. So locally, any smooth scheme admits a tau map to a defined space. And I'd like to also have to map a framing of X, and in some parts of algebraic numbers theory, it has become traditional to denote framings by a box symbol. Let me make the remark right now that the formulas often become simpler if you assume that the coordinates ti are invertible on X, and I will often make the simplifying assumptions. And again, locally on X, this can always be achieved.",
+    "summary": "Summary generation failed. Please try again later."
+  },
+  {
+    "start": "00_05_00",
+    "end": "00_10_00",
+    "content": "All right. And so, actually, I think for most of today, maybe all of today, we'll actually even more assume that X is just equal to a to the d, or gm to the d. And then, in the next step, we will see how to extend the discussion from just the space changes and get the tau over it. But on the first part, let's really just focus on the simplification. And so, one thing that happens in this case is that we don't actually have to do any completions. In this case, we can somehow define what is a spherical model. I do not want to make any claims, and something definitely false, that this would be independent of coordinates, but at least if you choose coordinates, you would be able to write it down. So, let's get started. So, we have these two derivatives. Which go from the i, which refers to an index, that's one of the coordinates, and goes from the algebra that we're working with, but you join q. And what does it do? Well, it's basically the same formula as for the derivative, except you have to define it just to define it as a monomial. So, you take product x1 to the n1, so xe to the nv, and well, usually you would get x1 to the n1, and then for xi you take 1, and then e to the nv, and you multiply by ni, and for this q derivative, simply q to the 4. Where, I recall that since there's a q-deformation of any integer n, 1 minus q to the n is 1 minus q. So, this is a different, more close to one formula for what this q derivative is, except if you apply it to a function of x.",
+    "summary": "Here is a summary of the transcript segment:\n\nThe lecture focuses on the simplification of a mathematical model, assuming X = a^d or gm^d. In this case, completions are not necessary, and a spherical model can be defined, although its coordinate-independence is not claimed. The discussion revolves around two derivatives, which map from an index i (referring to an algebra) to q. The q-derivative is defined as a monomial, similar to the standard derivative formula, but with q^4 instead of ni. The q-deformation of an integer n is recalled, where 1 - q^n is equal to 1 - q: these concepts are crucial in understanding the q-derivative's application to functions of x.\n\nAdded motivation: The study of q-derivatives and their relationship with standard derivatives, is essential in the broader mathematical context of algebraic combinatorics and representation theory. The q-deformation of integers and the resulting q-derivatives have far-reaching implications in the study of symmetric functions, Macdonald polynomials, and the representation theory of Lie algebras. The understanding of these concepts is vital in advancing research in these areas, and the lecture's focus on simplification and definition of spherical models is a crucial step in this direction."
+  },
+  {
+    "start": "00_10_00",
+    "end": "00_15_00",
+    "content": "So, the q is always somewhat treated as a constant in the background, and the x is, oh sorry, I called it t. It's the same way you take f of these things, but ci you multiply by q, and then you subtract the volume at the original spot. And then you divide by the different doses. And so you immediately see that this nabla iq is closely related. So, the automorphism gamma i from x to x, which sends any tj to either tj, where tj is not equal to i, but in coordinate i, multiplied by t. So, this gamma i of x is equal to iq. So, some basic facts about these q derivatives are that the nabla iq, they commute. However, be aware that they do not satisfy the Leibniz rule, since they satisfy a certain q-deformation of the Leibniz rule. So, if you apply it to a product, then you would expect that it's f times the q derivative of g, plus g times the q derivative of f. But that's not true, it's not a derivation. Instead, you need to put gamma i in one of these terms, and you're somehow free to choose where. So, this q-deformation of the Leibniz rule in particular breaks the symmetry a little bit, because this side was obviously asymmetric in f and g, this side doesn't look like it's symmetric. All right, let's see right now. And so, using this you can then write down a q-deformation of the Sideron complex. I think in some form this goes back to the work of our mentor, and I mean maybe it should do.",
+    "summary": "Here is a summary of the transcript segment:\n\nThe lecture discusses the properties of q-derivatives, specifically the nabla iq, which is closely related to the automorphism gamma i from x to x. The q-derivatives commute, but they do not satisfy the Leibniz rule, instead, they satisfy a q-deformation of the Leibniz rule, which breaks the symmetry in the product rule. This q-deformation involves inserting gamma i in one of the terms, allowing for a choice of where to place it. The lecture also touches on the q-deformation of the Sideron complex, which has roots in the work of the mentor. \n\nAdded motivation: The study of q-derivatives and their properties is crucial in the broader mathematical context of algebraic combinatorics and representation theory. The q-deformation of the Leibniz rule and the resulting q-derivatives have significant implications for the study of symmetric functions, Macdonald polynomials, and the representation theory of Lie algebras. Understanding these concepts is vital in advancing research in these areas."
+  },
+  {
+    "start": "00_15_00",
+    "end": "00_20_00",
+    "content": "So, this q derivative there goes back to the work of Jackson, from the early 20th century, and some kind of systematic study of this q-derived complex was maybe started by our mentor. And then you just apply the derivative in all directions, and then you go to the direct q-derived complex, and then you just apply the derivative in all directions, and then you just apply the derivative in all directions, and then you apply the derivative in all directions, and then you just apply the derivative in all directions, and then you apply the derivative in all directions. But something weird happens already here, in that usually the Sideron complex itself is like the typical example of a commutative differential graded algebra, but already at the first stage here, because this operator here does not satisfy the usual Leibniz rule, so it's actually not an example of a differential graded algebra. If one is very careful and works in the associative situation and treats these things as certain bimodules, I think one can like use some kind of associative structure on the nose, but certainly not at all commutative, but in some senses only a defect of this presentation, and I think I will come back to this later, because we are discussing whether this is true. When you work, like in the garage category, maybe the garage infinity category, it actually has a canonical commutative ring structure there.",
+    "summary": "Here is a summary of the transcript segment:\n\nThe lecture revisits the concept of q-derivatives, tracing back to Jackson's work in the early 20th century and further developed by the mentor. The q-derived complex is constructed by applying the q-derivative in all directions. However, a peculiar phenomenon arises: the Sideron complex, typically a commutative algebra, fails to satisfy the Leibniz rule due to the q-derivative's non-standard behavior. This anomaly can be addressed by working in an associative setting, treating the q-derivatives as bimodules, but this approach is not commutative. The lecturer hints at a potential resolution, which will be revisited later, possibly in the context of the garage infinity category, where a canonical commutative ring structure exists.\n\nAdded motivation: The study of q-derivatives and their properties is crucial in the broader mathematical context of algebraic combinatorics and representation theory. The anomalies arising from the q-deformation of the Leibniz rule have significant implications for the study of symmetric functions, Macdonald polynomials, and the representation theory of Lie algebras. Understanding these concepts is vital in advancing research in these areas, and the lecture's focus on resolving the commutativity issue is a crucial step in this direction."
+  },
+  {
+    "start": "00_20_00",
+    "end": "00_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_25_00",
+    "end": "00_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_30_00",
+    "end": "00_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_35_00",
+    "end": "00_40_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_40_00",
+    "end": "00_45_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_45_00",
+    "end": "00_50_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_50_00",
+    "end": "00_55_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_55_00",
+    "end": "01_00_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_00_00",
+    "end": "01_05_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_05_00",
+    "end": "01_10_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_10_00",
+    "end": "01_15_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_15_00",
+    "end": "01_20_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_20_00",
+    "end": "01_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_25_00",
+    "end": "01_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_30_00",
+    "end": "01_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_35_00",
+    "end": "01_40_00",
+    "content": "",
+    "summary": ""
+  }
+]

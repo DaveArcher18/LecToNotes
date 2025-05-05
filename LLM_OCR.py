@@ -7,26 +7,46 @@ import os
 import time
 import re
 import json
-import pickle
 from pathlib import Path
 from dotenv import load_dotenv
-import matplotlib.pyplot as plt
-import datetime
+import sys
 
-load_dotenv()
+# Load environment variables
+print("Loading environment variables...")
+load_dotenv(verbose=True)
 
+# Get API key
 API_KEY = os.getenv("OPENROUTER_API_KEY")
+print(f"API Key loaded: {'Yes (length: ' + str(len(API_KEY)) + ')' if API_KEY else 'No'}")
+
+if not API_KEY:
+    print("ERROR: OpenRouter API key not found in environment variables.")
+    print("Please add your API key to the .env file as: OPENROUTER_API_KEY=your_key_here")
+    print("Get your OpenRouter API key from: https://openrouter.ai/keys")
+    sys.exit(1)
+else:
+    print("API key loaded successfully!")
+
+# OpenRouter endpoint
+ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+
+# Fix: Use the API key directly in the Authorization header without any transformation
 HEADERS = {
     "Authorization": f"Bearer {API_KEY}",
+    "HTTP-Referer": "https://github.com/DaveArcher18/LecToNotes",
+    "X-Title": "LecToNotes OCR", 
     "Content-Type": "application/json"
 }
-ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
-# Keep Llama 4 Maverick for initial OCR from images
+
+# Print header info for debugging (masking the actual key)
+key_preview = API_KEY[:5] + "..." + API_KEY[-4:] if len(API_KEY) > 9 else "***"
+print(f"Authorization header: Bearer {key_preview}")
+
+# Models
 OCR_MODEL = "meta-llama/llama-4-maverick:free"
-# Use deepseek-prover-v2 for all refinements
 REFINER_MODEL = "deepseek/deepseek-prover-v2:free"
 VALIDATOR_MODEL = "deepseek/deepseek-prover-v2:free"
-THROTTLETIME = 0 
+THROTTLETIME = 0.5  # Small delay to avoid rate limits
 
 # Common mathematical structure patterns to validate
 MATH_PATTERNS = {
@@ -38,17 +58,12 @@ MATH_PATTERNS = {
 }
 
 def call_openrouter_api(messages, model, temperature=0.0, max_tokens=None, response_format=None):
-    """Enhanced function to call OpenRouter APIs with more parameters."""
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
+    """Call OpenRouter API with the specified parameters."""
+    # Prepare payload
     payload = {
         "model": model,
         "messages": messages,
-        "temperature": temperature
+        "temperature": temperature,
     }
     
     if max_tokens is not None:
@@ -57,75 +72,49 @@ def call_openrouter_api(messages, model, temperature=0.0, max_tokens=None, respo
     if response_format is not None:
         payload["response_format"] = response_format
     
-    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-    response.raise_for_status()
+    print(f"Calling OpenRouter API with model: {model}")
+    
+    # Make the request with fixed headers
     try:
+        # Debug the actual headers being sent (without showing full API key)
+        masked_headers = HEADERS.copy()
+        if "Authorization" in masked_headers:
+            key = masked_headers["Authorization"][7:]  # Remove "Bearer " prefix
+            masked_headers["Authorization"] = f"Bearer {key[:5]}...{key[-4:]}" if len(key) > 9 else "Bearer ***"
+        
+        print(f"Request headers: {masked_headers}")
+        print(f"Endpoint: {ENDPOINT}")
+        
+        response = requests.post(
+            ENDPOINT, 
+            headers=HEADERS,  # Use the global headers directly 
+            json=payload,
+            timeout=60
+        )
+        
+        if response.status_code == 401:
+            print(f"Authentication error: Invalid or missing API key.")
+            print(f"Error details: {response.text}")
+            print("Please check that your API key is correctly formatted and valid.")
+            sys.exit(1)
+        
+        if response.status_code != 200:
+            print(f"OpenRouter API error (HTTP {response.status_code}): {response.text}")
+            return f"ERROR: API request failed with status code {response.status_code}"
+        
+        # Process successful response
         data = response.json()
         return data["choices"][0]["message"]["content"].strip()
-    except (ValueError, requests.exceptions.JSONDecodeError):
-        # Fallback: return raw text if JSON parsing fails
-        return response.text.strip()
+        
+    except Exception as e:
+        print(f"Error during API call: {str(e)}")
+        return f"ERROR: Failed to get response from the API. {str(e)}"
 
-def optimize_image_for_ocr(image):
-    """
-    Optimize an image specifically for OCR processing.
-    This function can be applied to either a file path or a numpy image array.
-    """
-    # Handle both file path and numpy array inputs
-    if isinstance(image, str):
-        # It's a file path
-        img = cv2.imread(image)
-        if img is None:
-            raise ValueError(f"Could not read image from {image}")
-    else:
-        # It's already a numpy array
-        img = image.copy()
-    
-    # Resize with aspect ratio preservation
-    max_dim = 1024
-    h, w = img.shape[:2]
-    if h > w:
-        new_h, new_w = max_dim, int(max_dim * w / h)
-    else:
-        new_h, new_w = int(max_dim * h / w), max_dim
-    img = cv2.resize(img, (new_w, new_h))
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # Apply adaptive thresholding to better handle chalk/marker on blackboard
-    # This helps with contrast differences across the board
-    thresh = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-        cv2.THRESH_BINARY_INV, 21, 15
-    )
-    
-    # Detect text regions using morphological operations
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    
-    # Convert back to normal polarity (white text on black background)
-    morph = cv2.bitwise_not(morph)
-    
-    # Enhance contrast for better readability
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
-    
-    # Create a color image for the model by combining original with enhanced areas
-    # This gives us color context while maintaining enhanced text visibility
-    final = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2BGR)
-    
-    # Additional noise reduction
-    final = cv2.fastNlMeansDenoisingColored(final, None, 10, 10, 7, 21)
-    
-    return final
-
-def encode_image_to_data_uri(img):
-    """Convert OpenCV image to base64 data URI."""
-    success, buffer = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    if not success:
-        raise ValueError("Failed to encode image to JPEG")
-    b64 = base64.b64encode(buffer).decode("utf-8")
+def encode_image_to_data_uri(image_path):
+    """Convert image file to base64 data URI."""
+    # Read image directly from file
+    with open(image_path, "rb") as img_file:
+        b64 = base64.b64encode(img_file.read()).decode("utf-8")
     return f"data:image/jpeg;base64,{b64}"
 
 def find_relevant_transcript_context(timestamp, transcript_data):
@@ -155,6 +144,7 @@ def find_relevant_transcript_context(timestamp, transcript_data):
     previous_segment = None
     next_segment = None
     all_summaries = []
+    next_segment_start_seconds = float('inf')
     
     for segment in transcript_data:
         # Extract start and end times
@@ -171,8 +161,9 @@ def find_relevant_transcript_context(timestamp, transcript_data):
         # Check if timestamp falls within this segment
         if start_seconds <= timestamp_seconds < end_seconds:
             current_segment = segment
-        elif end_seconds <= timestamp_seconds and (next_segment is None or end_seconds > next_segment_start_seconds):
+        elif end_seconds <= timestamp_seconds and (next_segment is None or end_seconds > previous_segment.get("end_seconds", 0) if previous_segment else 0):
             previous_segment = segment
+            previous_segment["end_seconds"] = end_seconds
         elif timestamp_seconds < start_seconds and (next_segment is None or start_seconds < next_segment_start_seconds):
             next_segment = segment
             next_segment_start_seconds = start_seconds
@@ -190,8 +181,8 @@ def find_relevant_transcript_context(timestamp, transcript_data):
     
     return context, all_summaries
 
-def extract_latex_with_ocr(image_data_uri, transcript_context=None, summaries=None):
-    """First pass: Extract raw content from image using Llama 4 Maverick with transcript context."""
+def extract_latex_with_ocr(image_data_uri, transcript_context=None, all_past_summaries=None):
+    """First pass: Extract raw content from image using Llama 4 Maverick with transcript context and all past summaries."""
     ocr_system_prompt = """You are an expert mathematics OCR system specializing in extracting LaTeX from blackboard images of advanced mathematics lectures.
 
 CONTEXT: These images come from lectures on topics like Habiro cohomology, arithmetic geometry, p-adic Hodge theory, and other advanced mathematics.
@@ -226,12 +217,18 @@ YOUR TASK: Convert the blackboard content into precise, properly formatted LaTeX
    - Use \\mathbb{R}, \\mathbb{Z}, etc. for number sets
    - Use \\text{} for text within math expressions
    - Use proper spacing in LaTeX expressions
+   
+5. IMPORTANT FORMATTING RESTRICTIONS:
+   - DO NOT include \\documentclass, \\usepackage, \\begin{document}, or \\end{document}
+   - The output will be directly displayed on a website, not compiled as a LaTeX document
+   - DO NOT include any LaTeX preamble or document setup commands
+   - Focus ONLY on the mathematical content itself
 
 IMPORTANT: Focus on accurately transcribing the mathematical content rather than interpreting or explaining it. Preserve all mathematical symbols exactly as they appear.
 """
 
     user_content = [
-        {"type": "text", "text": "Transcribe the mathematical content from this blackboard image into precise LaTeX/Markdown."},
+        {"type": "text", "text": "Transcribe the mathematical content from this blackboard image into precise LaTeX/Markdown. The output will be displayed directly on a website, so do NOT include any LaTeX document setup commands like \\documentclass, \\usepackage, or \\begin{document}."},
         {"type": "image_url", "image_url": {"url": image_data_uri}}
     ]
     
@@ -245,10 +242,10 @@ This should help you accurately interpret the mathematical notation and terminol
         """
         user_content[0]["text"] += "\n\n" + context_text
         
-    # Add lecture summaries if available
-    if summaries and len(summaries) > 0:
-        summaries_text = "\nSUMMARIES OF LECTURE CONTENT:\n"
-        for i, summary in enumerate(summaries[:3]):  # Use up to 3 summaries to avoid context length issues
+    # Add ALL past lecture summaries if available
+    if all_past_summaries and len(all_past_summaries) > 0:
+        summaries_text = "\nLECTURE HISTORICAL CONTEXT (all previous lecture segments):\n"
+        for i, summary in enumerate(all_past_summaries):
             summaries_text += f"Summary {i+1}:\n{summary}\n\n"
         user_content[0]["text"] += "\n" + summaries_text
 
@@ -259,8 +256,8 @@ This should help you accurately interpret the mathematical notation and terminol
     
     return call_openrouter_api(ocr_messages, OCR_MODEL, temperature=0.1, max_tokens=1500)
 
-def structure_latex_content(raw_text, transcript_context=None, summaries=None):
-    """Second pass: Structure the raw content into proper LaTeX environments with transcript context."""
+def validate_and_structure_latex(raw_text, transcript_context=None, all_past_summaries=None):
+    """Combined function to structure and validate LaTeX content"""
     
     # Include context in the prompt if available
     context_section = ""
@@ -269,17 +266,17 @@ def structure_latex_content(raw_text, transcript_context=None, summaries=None):
 LECTURE CONTEXT:
 {transcript_context}
 
-Use this context to help you understand the mathematical terminology and notation, but focus on structuring the raw extracted content.
+Use this context to help you understand the mathematical terminology and notation while structuring and validating the content.
 """
     
     # Include summaries in the prompt if available
     summaries_section = ""
-    if summaries and len(summaries) > 0:
-        summaries_section = "\nLECTURE SUMMARIES:\n"
-        for i, summary in enumerate(summaries[:2]):  # Use up to 2 summaries to avoid context length issues
+    if all_past_summaries and len(all_past_summaries) > 0:
+        summaries_section = "\nLECTURE HISTORICAL CONTEXT:\n"
+        for i, summary in enumerate(all_past_summaries[:5]):  # Use first 5 summaries for context
             summaries_section += f"Summary {i+1}:\n{summary}\n\n"
     
-    structure_prompt = f"""You are an expert LaTeX formatter specializing in mathematical notation. Your task is to take the raw mathematical content extracted from a blackboard and structure it into proper LaTeX environments.
+    combined_prompt = f"""You are an expert LaTeX formatter and validator specializing in advanced mathematics. Your task is to structure and validate the raw mathematical content extracted from a blackboard.
 
 Raw extracted content:
 ```
@@ -288,98 +285,89 @@ Raw extracted content:
 {context_section}
 {summaries_section}
 
-Please transform this into well-structured LaTeX by:
+Please transform this into well-structured, valid web-compatible LaTeX/Markdown by:
 
-1. Identifying mathematical structures (equations, matrices, etc.) and ensuring they use the correct LaTeX environments
-2. Ensuring all mathematical expressions are properly delimited with $ or $$
-3. Using appropriate environments like align, matrix, cases, etc.
-4. Ensuring all environments are properly opened and closed
-5. Ensuring proper nesting of delimiters and environments
-6. Fixing common OCR errors in mathematical notation
+1. WEBSITE FORMATTING REQUIREMENTS:
+   - DO NOT include \\documentclass, \\usepackage, \\begin document, or \\end document
+   - DO NOT include any LaTeX preamble or document setup
+   - The output will be displayed on a website, not compiled as a LaTeX document
+   - Focus ONLY on the mathematical content itself
 
-Specifically:
-- Convert all instances of \\\\2 to {{2}} for squared terms
-- Convert _2 to _{{2}} for subscripts
-- Fix any unescaped special characters like % _ & # etc.
-- Replace \\\\section{{}} and \\\\subsection{{}} with markdown ## and ### respectively
-- Ensure all \\\\begin{{environment}} have matching \\\\end{{environment}}
-- Fix any mismatched $$...$ or $...$$
-- Use the context provided to correctly identify mathematical symbols and terminology
-- Make sure to preserve mathematical meaning while improving formatting
+2. Mathematical Structure:
+   - Identifying mathematical structures (equations, matrices, etc.) and ensuring they use the correct LaTeX environments
+   - Ensuring all mathematical expressions are properly delimited with $ or $$
+   - Using appropriate environments like align, matrix, cases, etc.
+   - Ensuring all environments are properly opened and closed
+   - Ensuring proper nesting of delimiters and environments
+   - Fixing common OCR errors in mathematical notation
 
-OUTPUT ONLY the structured LaTeX content with no explanation or commentary.
+3. Syntax Validation:
+   - Convert all instances of \\2 to {2} for squared terms
+   - Convert _2 to _{2} for subscripts
+   - Fix any unescaped special characters like % _ & # etc.
+   - Replace \\section{{}} and \\subsection{{}} with markdown ## and ### respectively
+   - Ensure all \\begin{{environment}} have matching \\end{{environment}}
+   - Fix any mismatched $$...$ or $...$$
+   - Use proper mathematical notation for special symbols
+
+4. Content Formatting:
+   - Use the context provided to correctly identify mathematical symbols and terminology
+   - Make sure to preserve mathematical meaning while improving formatting
+   - Organize content in a logical flow
+   - Use Markdown headings (## for sections, ### for subsections) for clear structure
+   - Insert blank lines between different sections/topics
+   - For inline math, use $...$ notation
+   - For display math, use $$...$$ notation
+
+Return ONLY the structured and validated LaTeX/Markdown content with no explanation or commentary.
 """
 
-    structure_messages = [
-        {"role": "system", "content": "You are an expert LaTeX formatter specializing in advanced mathematics."},
-        {"role": "user", "content": structure_prompt}
+    combined_messages = [
+        {"role": "system", "content": "You are an expert LaTeX validator and formatter specializing in advanced mathematics."},
+        {"role": "user", "content": combined_prompt}
     ]
     
-    return call_openrouter_api(structure_messages, REFINER_MODEL, temperature=0.1)
+    return call_openrouter_api(combined_messages, REFINER_MODEL, temperature=0.1)
 
-def validate_latex_syntax(structured_text, transcript_context=None):
-    """Third pass: Validate and correct LaTeX syntax with transcript context."""
+def ocr_process_image(image_path, transcript_data=None, timestamp=None, all_past_summaries=None):
+    """
+    Simplified OCR process that uses pre-processed images directly.
+    """
+    # Convert image to data URI
+    data_uri = encode_image_to_data_uri(image_path)
     
-    # Include context in the prompt if available
-    context_section = ""
-    if transcript_context:
-        context_section = f"""
-LECTURE CONTEXT:
-{transcript_context}
-
-Use this context to help you understand the mathematical terminology, but focus on validating the LaTeX syntax.
-"""
+    # Get relevant transcript context if available
+    transcript_context = None
+    if transcript_data and timestamp:
+        transcript_context, segment_summaries = find_relevant_transcript_context(timestamp, transcript_data)
+        if transcript_context:
+            print("Found relevant transcript context for this board.")
     
-    validation_prompt = f"""You are an expert LaTeX validator specializing in advanced mathematics. Your task is to check the following mathematical content for LaTeX syntax errors and correct them.
-
-Content to validate:
-```
-{structured_text}
-```
-{context_section}
-
-Please focus on these specific issues:
-1. Check that all LaTeX environments are properly opened and closed
-2. Ensure all mathematical delimiters ($, $$, \\begin, \\end) are correctly paired
-3. Verify that all commands have their required arguments
-4. Fix any common errors with subscripts (_) and superscripts (^)
-5. Convert all instances of \\2, \\3, etc. to {{2}}, {{3}}, etc.
-6. Fix common spacing issues in LaTeX expressions
-7. Fix Unicode or special character encoding issues
-8. Replace \\section{{...}} with ## ... and \\subsection{{...}} with ### ...
-9. Ensure inline math formulas use single $ and display formulas use $$
-10. Fix any LaTeX commands that are incorrectly escaped (e.g., \\\\mathbb should be \\mathbb)
-11. Ensure mathematical notation consistency with the lecture context
-
-Common patterns to fix:
-- Replace _2 with _{{2}}
-- Replace ^2 with ^{{2}}
-- Replace \\2 with {{2}}
-- Replace \\\\begin with \\begin
-- Replace \\\\end with \\end
-- Fix any improperly closed environments
-- Correct mathematical terminology based on the lecture context
-
-Return ONLY the corrected content without any explanations.
-"""
-
-    validation_messages = [
-        {"role": "system", "content": "You are an expert LaTeX syntax validator and mathematics specialist."},
-        {"role": "user", "content": validation_prompt}
-    ]
+    # First pass OCR with Llama 4 Maverick
+    print("Extracting raw content...")
+    raw_text = extract_latex_with_ocr(data_uri, transcript_context, all_past_summaries)
     
-    return call_openrouter_api(validation_messages, VALIDATOR_MODEL, temperature=0.0)
+    # Skip further processing if illegible
+    if raw_text.strip() == "%illegible":
+        return "%illegible"
+    
+    # Combined structure and validation with DeepSeek Prover
+    print("Structuring and validating content...")
+    validated_text = validate_and_structure_latex(raw_text, transcript_context, all_past_summaries)
+    
+    # Final postprocessing
+    print("Final postprocessing...")
+    final_text = enhanced_postprocess_text(validated_text)
+    
+    return final_text
 
 def enhanced_postprocess_text(text):
     """Enhanced postprocessing with specific rules for mathematical notation."""
-    try:
-        # Decode unicode escapes
-        text = text.encode('utf-8').decode('unicode-escape')
-        # Fix Latin-1 misencoded sequences from UTF-8 escapes
-        text = text.encode('latin-1').decode('utf-8', errors='replace')
-    except UnicodeDecodeError:
-        # Leave original text if decoding fails
-        pass
+    # Remove LaTeX document setup commands
+    text = re.sub(r'\\documentclass.*?(\n|$)', '', text)
+    text = re.sub(r'\\usepackage.*?(\n|$)', '', text)
+    text = re.sub(r'\\begin\{document\}.*?(\n|$)', '', text)
+    text = re.sub(r'\\end\{document\}.*?(\n|$)', '', text)
     
     # Clean up code blocks and markdown formatting
     text = text.replace('```latex', '').replace('```markdown', '').replace('```', '')
@@ -418,11 +406,6 @@ def enhanced_postprocess_text(text):
     # Fix accidental escaping of LaTeX commands
     text = re.sub(r'\\\\([a-zA-Z]+)', r'\\\1', text)
     
-    # Fix common OCR errors in mathematical notation
-    text = text.replace('\\u0007', '')  # Remove control characters
-    text = text.replace('\\u0007pprox', '\\approx')  # Fix common error for approximation symbol
-    text = text.replace('\\u0007cute{e}t', '\\acute{e}t')  # Fix common error for acute accent
-    
     # Fix spacing issues
     text = re.sub(r'\n{3,}', '\n\n', text)
     
@@ -443,83 +426,11 @@ def enhanced_postprocess_text(text):
     if open_delims % 2 != 0:
         text += '\n$$'  # Add closing delimiter if missing
     
+    # Clean up any remaining document class/package residue
+    text = re.sub(r'\$\$ \\begin\{document\}', r'$$', text)
+    text = re.sub(r'\\end\{document\} \$\$', r'$$', text)
+    
     return text.strip()
-
-def get_ocr_optimized_image(image_path_or_array):
-    """Get an OCR-optimized version of the image."""
-    # Optimize the image for OCR
-    ocr_img = optimize_image_for_ocr(image_path_or_array)
-    return ocr_img
-
-def load_transcript_data(transcript_path):
-    """Load transcript data from a JSON file."""
-    if not transcript_path or not os.path.exists(transcript_path):
-        print(f"Warning: Transcript file {transcript_path} not found.")
-        return None
-    
-    try:
-        with open(transcript_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error loading transcript data: {e}")
-        return None
-
-def multi_stage_ocr_process(image_path_or_array, transcript_data=None, timestamp=None):
-    """
-    Implement the multi-stage OCR pipeline with transcript context.
-    Can accept either a file path or a pre-loaded image array.
-    """
-    # Step 1: Get OCR-optimized image
-    img_proc = get_ocr_optimized_image(image_path_or_array)
-    data_uri = encode_image_to_data_uri(img_proc)
-    
-    # Step 2: Get relevant transcript context if available
-    transcript_context = None
-    summaries = None
-    if transcript_data and timestamp:
-        transcript_context, summaries = find_relevant_transcript_context(timestamp, transcript_data)
-        if transcript_context:
-            print("Found relevant transcript context for this board.")
-        if summaries:
-            print(f"Using {min(len(summaries), 3)} lecture summaries to enhance context.")
-    
-    # Step 3: First pass OCR with Llama 4 Maverick
-    print("Extracting raw content...")
-    raw_text = extract_latex_with_ocr(data_uri, transcript_context, summaries)
-    
-    # Skip further processing if illegible
-    if raw_text.strip() == "%illegible":
-        return "%illegible"
-    
-    # Step 4: Structure the content with DeepSeek Prover
-    print("Structuring content...")
-    structured_text = structure_latex_content(raw_text, transcript_context, summaries)
-    
-    # Step 5: Validate LaTeX syntax with DeepSeek Prover
-    print("Validating LaTeX syntax...")
-    validated_text = validate_latex_syntax(structured_text, transcript_context)
-    
-    # Step 6: Enhanced postprocessing
-    print("Final postprocessing...")
-    final_text = enhanced_postprocess_text(validated_text)
-    
-    return final_text
-
-def check_for_ocr_data(json_path):
-    """Check if there's OCR-optimized data available for the boards."""
-    # Look for the pickle file with OCR-optimized images
-    json_dir = os.path.dirname(json_path)
-    pickle_path = os.path.join(json_dir, 'boards_ocr_data.pkl')
-    
-    if os.path.exists(pickle_path):
-        print(f"Found OCR-optimized data at {pickle_path}")
-        try:
-            with open(pickle_path, 'rb') as f:
-                return pickle.load(f)
-        except Exception as e:
-            print(f"Error loading OCR data: {e}")
-    
-    return None
 
 def process_boards_json(json_path, transcript_path=None):
     """Process all boards in a JSON file with optional transcript context."""
@@ -527,31 +438,13 @@ def process_boards_json(json_path, transcript_path=None):
     transcript_data = None
     if transcript_path:
         print(f"Loading transcript data from {transcript_path}...")
-        transcript_data = load_transcript_data(transcript_path)
-        if transcript_data:
-            print(f"Loaded {len(transcript_data)} transcript segments.")
-        
-    # Check if we have OCR-optimized data
-    ocr_data = check_for_ocr_data(json_path)
-    
-    # If we have OCR data, we'll use the pre-optimized images
-    # Otherwise we'll load from the board images and optimize them ourselves
-    using_preoptimized = ocr_data is not None
+        with open(transcript_path, 'r', encoding='utf-8') as f:
+            transcript_data = json.load(f)
+        print(f"Loaded {len(transcript_data)} transcript segments.")
     
     # Load the JSON file
     with open(json_path, 'r') as f:
-        content = f.read()
-    try:
-        boards_data = json.loads(content)
-    except json.JSONDecodeError:
-        # Quote unquoted property names, strip comments, and remove trailing commas, then retry
-        fixed = re.sub(r'(?m)^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*:', r'"\1":', content)
-        # Remove single-line comments
-        fixed = re.sub(r'(?m)//.*$', '', fixed)
-        fixed = re.sub(r'(?m)#.*$', '', fixed)
-        # Remove trailing commas before } or ]
-        fixed = re.sub(r',\s*(?=[}\]])', '', fixed)
-        boards_data = json.loads(fixed)
+        boards_data = json.load(f)
     
     # Get the base directory of the JSON file
     json_dir = os.path.dirname(json_path)
@@ -564,87 +457,87 @@ def process_boards_json(json_path, transcript_path=None):
     if skipped_entries > 0:
         print(f"Found {skipped_entries} already processed entries with text. Will skip these.")
     
+    print(f"Processing {len(entries_to_process)} boards...")
+    
     # Process each board entry that doesn't already have text
     processed_count = 0
     for i, board in enumerate(boards_data):
         # Skip if this entry already has text
         if 'text' in board:
             continue
+            
+        # Get the image path from the board entry
+        image_basename = os.path.basename(board['path'])
         
-        # Get the corresponding entry from OCR data if available
-        ocr_img = None
-        if using_preoptimized:
-            # Find the matching entry in ocr_data
-            for ocr_entry in ocr_data:
-                if ocr_entry['timestamp'] == board['timestamp'] and ocr_entry['path'] == board['path']:
-                    ocr_img = ocr_entry.get('ocr_img')
+        # Directly construct the path to the OCR-processed image
+        ocr_basename = image_basename.replace('board_', 'ocr_')
+        ocr_image_path = os.path.join(json_dir, 'ocr', ocr_basename)
+        
+        # Check if the OCR image exists
+        if not os.path.exists(ocr_image_path):
+            print(f"Warning: OCR image not found at {ocr_image_path}")
+            # Look in alternative locations
+            alt_paths = [
+                os.path.join(json_dir, 'boards', 'ocr', ocr_basename),
+                os.path.join(os.path.dirname(json_dir), 'boards', 'ocr', ocr_basename)
+            ]
+            
+            for alt_path in alt_paths:
+                if os.path.exists(alt_path):
+                    ocr_image_path = alt_path
+                    print(f"Found OCR image at {ocr_image_path}")
                     break
+            else:
+                print(f"Error: OCR image not found for {ocr_basename}. Skipping.")
+                board['text'] = "%error: OCR image not found"
+                continue
         
-        # If no OCR image was found in pre-optimized data, load from the file path
-        if ocr_img is None:
-            # Get the image path - handle the path correctly
-            image_path = board['path']
-            
-            # If the path is not absolute, make it relative to the JSON directory
-            if not os.path.isabs(image_path):
-                # Handle different path formats - use only the basename if it's likely a duplicate path
-                if 'boards/' in image_path or os.path.basename(json_dir) in image_path:
-                    # Strip redundant directory prefixes
-                    image_basename = os.path.basename(image_path)
-                    image_path = os.path.join(json_dir, image_basename)
-                else:
-                    # Simply join with the JSON directory
-                    image_path = os.path.join(json_dir, image_path)
-            
-            # Skip if the image doesn't exist
-            if not os.path.exists(image_path):
-                print(f"Warning: Image {image_path} does not exist. Trying alternative paths...")
-                
-                # Try a few common alternative paths
-                alternatives = [
-                    os.path.join(json_dir, os.path.basename(image_path)),
-                    os.path.join(os.path.dirname(json_dir), os.path.basename(image_path)),
-                    image_path.replace(f"{os.path.basename(json_dir)}/", "")
-                ]
-                
-                for alt_path in alternatives:
-                    if os.path.exists(alt_path):
-                        print(f"Found alternative path: {alt_path}")
-                        image_path = alt_path
-                        break
-                else:
-                    print(f"Error: Could not locate image {os.path.basename(image_path)} after trying alternatives. Skipping.")
-                    # Save board entry with error message instead of skipping completely
-                    board['text'] = "%error: image not found"
-                    with open(json_path, 'w') as f:
-                        json.dump(boards_data, f, indent=2)
-                    continue
-            
-            # We'll use the file path since we don't have a pre-optimized image
-            ocr_input = image_path
-        else:
-            # We'll use the pre-optimized image
-            ocr_input = ocr_img
-        
-        # Process the image and get the LaTeX text
+        # Process the image
         processed_count += 1
         timestamp = board.get('timestamp')
-        print(f"Processing image {processed_count}/{len(entries_to_process)} (entry {i+1}/{total_entries}): {os.path.basename(board['path'])} at timestamp {timestamp}")
+        print(f"Processing image {processed_count}/{len(entries_to_process)}: {image_basename} ({timestamp})")
         
-        try:
-            # Use the multi-stage OCR process with transcript context
-            latex_text = multi_stage_ocr_process(ocr_input, transcript_data, timestamp)
-            
-            # Add the text field to the board entry
-            board['text'] = latex_text
-            
-            # Save the updated JSON file after each successful API call
-            # This ensures we don't lose progress if an error occurs later
-            with open(json_path, 'w') as f:
-                json.dump(boards_data, f, indent=2)
-            print(f"Saved progress to {json_path} after processing image {processed_count}/{len(entries_to_process)}")
-            
-            # Ad
+        # Get all transcript summaries up to this timestamp
+        all_past_summaries = []
+        
+        if transcript_data and timestamp:
+            # Parse the timestamp (expected format: "HH_MM_SS")
+            if isinstance(timestamp, str) and '_' in timestamp:
+                parts = timestamp.split('_')
+                if len(parts) >= 3:
+                    hour = int(parts[0])
+                    minute = int(parts[1])
+                    second = int(parts[2]) if parts[2] else 0
+                    timestamp_seconds = hour * 3600 + minute * 60 + second
+                    
+                    # Collect all summaries from segments before this timestamp
+                    for segment in transcript_data:
+                        # Extract end time of segment
+                        end_parts = segment["end"].split('_')
+                        end_seconds = int(end_parts[0]) * 3600 + int(end_parts[1]) * 60 + int(end_parts[2])
+                        
+                        # If segment ends before current timestamp and has a summary, include it
+                        if end_seconds <= timestamp_seconds and "summary" in segment and segment["summary"].strip():
+                            all_past_summaries.append(segment["summary"])
+        
+        print(f"Using {len(all_past_summaries)} historical summaries for context")
+        
+        # Process the OCR image
+        latex_text = ocr_process_image(ocr_image_path, transcript_data, timestamp, all_past_summaries)
+        
+        # Add the text field to the board entry
+        board['text'] = latex_text
+        
+        # Save the updated JSON file after each successful API call
+        with open(json_path, 'w') as f:
+            json.dump(boards_data, f, indent=2)
+        
+        # Add a delay to avoid rate limiting
+        if THROTTLETIME > 0 and processed_count < len(entries_to_process):
+            time.sleep(THROTTLETIME)
+    
+    print(f"✅ Completed processing {processed_count} boards!")
+    return boards_data
 
 def main():
     parser = argparse.ArgumentParser(
@@ -652,38 +545,51 @@ def main():
     )
     parser.add_argument("input_path", 
                       help="Path to either a single image or a boards.json file")
-    parser.add_argument("--debug", action="store_true",
-                      help="Enable debug mode with visualization of preprocessing steps")
-    parser.add_argument("--force-optimize", action="store_true",
-                      help="Force re-optimization of images even if OCR data exists")
+    parser.add_argument("--transcript", 
+                      help="Path to the transcript.json file for context enhancement")
+    parser.add_argument("--ocr-dir",
+                      help="Directory containing OCR-processed images (default: 'ocr' relative to input)")
     args = parser.parse_args()
+    
+    # Check if input path exists
+    if not os.path.exists(args.input_path):
+        print(f"ERROR: Input path '{args.input_path}' not found.")
+        sys.exit(1)
+    
+    # Check if transcript exists if provided
+    if args.transcript and not os.path.exists(args.transcript):
+        print(f"WARNING: Transcript file '{args.transcript}' not found.")
+        args.transcript = None
+    
+    # Test the connection with a simple API call
+    print("Testing API connection...")
+    test_messages = [
+        {"role": "system", "content": "Test message to verify API connection."},
+        {"role": "user", "content": "This is a test. Please respond with 'API connection successful.'"}
+    ]
+    response = call_openrouter_api(test_messages, OCR_MODEL, temperature=0.0)
+    
+    if "API connection successful" in response:
+        print("API connection confirmed.")
     
     # Check if the input is a JSON file or an image
     if args.input_path.endswith('.json'):
-        process_boards_json(args.input_path)
+        process_boards_json(args.input_path, args.transcript)
     else:
-        # Process a single image
-        if args.debug:
-            # Show preprocessing steps in debug mode
-            img = cv2.imread(args.input_path)
-            img_proc = optimize_image_for_ocr(args.input_path)
-            
-            plt.figure(figsize=(12, 6))
-            plt.subplot(1, 2, 1)
-            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("Original Image")
-            plt.axis("off")
-            
-            plt.subplot(1, 2, 2)
-            plt.imshow(cv2.cvtColor(img_proc, cv2.COLOR_BGR2RGB))
-            plt.title("OCR-Optimized Image")
-            plt.axis("off")
-            
-            plt.tight_layout()
-            plt.show()
+        # Process a single image file
+        print(f"Processing single image: {args.input_path}")
         
-        # Run the multi-stage OCR process
-        latex_output = multi_stage_ocr_process(args.input_path)
+        # Determine timestamp from filename if possible
+        timestamp = None
+        filename = os.path.basename(args.input_path)
+        if filename.startswith("board_") and "_" in filename:
+            parts = filename.split("_")
+            if len(parts) >= 4:
+                timestamp = f"{parts[1]}_{parts[2]}_{parts[3].split('.')[0]}"
+                print(f"Extracted timestamp: {timestamp}")
+        
+        # Process the image
+        latex_output = ocr_process_image(args.input_path)
         print("\n--- LaTeX Output ---\n")
         print(latex_output)
 

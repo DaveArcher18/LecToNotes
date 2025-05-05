@@ -1,0 +1,122 @@
+[
+  {
+    "start": "00_00_00",
+    "end": "00_05_00",
+    "content": "I'd like to give you a little bit of an analysis about this Hanviro cohomology, and ideally you would like to associate to NEX, which may be for simplicity, say, smooth scheme with integers, this should have some Hanviro cohomology. Which should be some module, or a graded module, for a value array, but really we would like to have something really more. So when I discussed cohomology series last time, I was emphasising that each of these really also comes with some category of coefficients, or constructable sheaves, or something. So we would also have some kind of, I don't know what to call this, but some kind of derived category. And for lack of a better name, I would prefer to use these as variations for a Neurohomus structure, but some kind of derived category associated to NEX, giving you the sheave series for this notion of a Neurohomology. And what I would like to start with in this first video lecture is to explain what these structures should be in coordinates. And it turns out that if you choose coordinates on X, these things have very simple definitions, and the whole mystery is why these objects turn out to be independent of the choice of coordinates. And in fact, so what I mean by coordinates... ...named a tau map. So locally, any smooth scheme admits a tau map to a defined space. And I'd like to also have to map a framing of X, and in some parts of algebraic numbers theory, it has become traditional to denote framings by a box symbol. Let me make the remark right now that the formulas often become simpler if you assume that the coordinates ti are invertible on X, and I will often make the simplifying assumptions. And again, locally on X, this can always be achieved.",
+    "summary": "Summary generation failed. Please try again later."
+  },
+  {
+    "start": "00_05_00",
+    "end": "00_10_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_10_00",
+    "end": "00_15_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_15_00",
+    "end": "00_20_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_20_00",
+    "end": "00_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_25_00",
+    "end": "00_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_30_00",
+    "end": "00_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_35_00",
+    "end": "00_40_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_40_00",
+    "end": "00_45_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_45_00",
+    "end": "00_50_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_50_00",
+    "end": "00_55_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "00_55_00",
+    "end": "01_00_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_00_00",
+    "end": "01_05_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_05_00",
+    "end": "01_10_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_10_00",
+    "end": "01_15_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_15_00",
+    "end": "01_20_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_20_00",
+    "end": "01_25_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_25_00",
+    "end": "01_30_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_30_00",
+    "end": "01_35_00",
+    "content": "",
+    "summary": ""
+  },
+  {
+    "start": "01_35_00",
+    "end": "01_40_00",
+    "content": "",
+    "summary": ""
+  }
+]

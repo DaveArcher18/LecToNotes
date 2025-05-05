@@ -80,7 +80,7 @@ The system uses two API services:
    - Get your API key from the dashboard
    - Add it to your `.env` file: `OPENROUTER_API_KEY=your_key_here`
 
-2. **Groq API** (optional, for enhanced transcription):
+2. **Groq API** (optional, for enhanced transcription, required for summarising transcript):
    - Sign up at [Groq](https://groq.com/)
    - Get your API key from the dashboard
    - Add it to your `.env` file: `GROQ_API_KEY=your_key_here`

@@ -6,6 +6,7 @@ import re
 import tempfile
 import time
 import hashlib
+import sys  # Add missing sys import
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -225,6 +226,10 @@ def transcribe_local(wav: Path, prompt: str) -> str:
 
 def transcribe_groq(wav: Path, prompt: str, retries: int = MAX_RETRIES) -> str:
     """Transcribe audio using Groq's API with retry logic."""
+    if not os.getenv("GROQ_API_KEY"):
+        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY to your .env file.")
+        raise ValueError("Groq API key is missing")
+        
     with open(wav, "rb") as f:
         attempt = 0
         while attempt < retries:
@@ -240,6 +245,7 @@ def transcribe_groq(wav: Path, prompt: str, retries: int = MAX_RETRIES) -> str:
             except Exception as e:
                 attempt += 1
                 if attempt >= retries:
+                    print(f"[ERROR] Failed to transcribe after {retries} attempts: {e}")
                     raise
                 print(f"[ERROR] API call failed: {e}. Retrying in {RETRY_DELAY} seconds...")
                 time.sleep(RETRY_DELAY * attempt)  # Exponential backoff
@@ -250,6 +256,10 @@ def transcribe_groq(wav: Path, prompt: str, retries: int = MAX_RETRIES) -> str:
 
 def generate_summary(content: str, previous_summaries: List[str] = None) -> str:
     """Generate a summary for a transcript segment."""
+    if not os.getenv("GROQ_API_KEY"):
+        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY to your .env file.")
+        return "Summary generation failed. GROQ_API_KEY is missing."
+        
     previous_context = ""
     if previous_summaries and len(previous_summaries) > 0:
         previous_context = "Previous segment summaries:\n" + "\n".join([
@@ -272,20 +282,30 @@ TRANSCRIPT SEGMENT:
 {content}
 """
     
-    try:
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                {"role": "system", "content": "You are an expert academic summarizer specializing in technical mathematics."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=300,
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"[ERROR] Failed to generate summary: {e}")
-        return "Summary generation failed. Please try again later."
+    max_retries = 3
+    retry_delay = 2
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model="llama3-70b-8192",
+                messages=[
+                    {"role": "system", "content": "You are an expert academic summarizer specializing in technical mathematics."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=300,
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait_time = retry_delay * (2 ** attempt)
+                print(f"[ERROR] Failed to generate summary: {e}. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print(f"[ERROR] Failed to generate summary after {max_retries} attempts: {e}")
+                return f"Summary generation failed. Error: {str(e)}"
+    
+    return "Summary generation failed. Please try again later."
 
 
 # ---------------------------------------------------------------------------
@@ -343,6 +363,7 @@ def main():
 
     # For summarize-only mode, process existing transcript and exit
     if args.summarize_only:
+        print(f"[INFO] Summarize-only mode: Processing existing transcript at {args.out}")
         process_transcript(args.out, args.use_groq, True)
         return
 
@@ -350,39 +371,94 @@ def main():
     if not args.input:
         ap.error("the input argument is required unless using --summarize-only")
 
+    if args.use_groq and not os.getenv("GROQ_API_KEY"):
+        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY=your_key to your .env file.")
+        print("        Continuing with local Whisper model instead.")
+        args.use_groq = False
+
+    # Check if Whisper is available for local transcription
+    if not args.use_groq and not whisper_available:
+        print("[ERROR] Local Whisper model not available and Groq not enabled.")
+        print("        Please either:")
+        print("        1. Install Whisper: pip install -U openai-whisper")
+        print("        2. Add GROQ_API_KEY to your .env file and use --use-groq")
+        sys.exit(1)
+
+    print(f"[INFO] Processing video: {args.input}")
+    print(f"[INFO] Output will be saved to: {args.out}")
+    
     work = Path(tempfile.mkdtemp())
+    print(f"[INFO] Created temporary working directory: {work}")
     
     # Acquire video
     if re.match(r"https?://", args.input):
-        video = download_youtube(args.input, work)
+        print(f"[INFO] Downloading YouTube video: {args.input}")
+        try:
+            video = download_youtube(args.input, work)
+            print(f"[INFO] Downloaded video to: {video}")
+        except Exception as e:
+            print(f"[ERROR] Failed to download YouTube video: {e}")
+            print("        Please check your internet connection and the video URL.")
+            sys.exit(1)
     else:
         video = Path(args.input).resolve()
+        print(f"[INFO] Using local video file: {video}")
         if not video.exists():
-            raise FileNotFoundError(video)
+            print(f"[ERROR] Video file not found: {video}")
+            print("        Please check that the file exists and the path is correct.")
+            sys.exit(1)
 
     # Extract and preprocess audio
-    wav = work / "audio.wav"
-    extract_audio(video, wav)
-    
-    if not args.skip_preprocessing and librosa_available:
-        wav = preprocess_audio(wav)
+    try:
+        print(f"[INFO] Extracting audio from video...")
+        wav = work / "audio.wav"
+        extract_audio(video, wav)
+        print(f"[INFO] Audio extracted to: {wav}")
+        
+        if not args.skip_preprocessing and librosa_available:
+            wav = preprocess_audio(wav)
+        elif not librosa_available and not args.skip_preprocessing:
+            print("[WARN] Librosa not available, skipping audio preprocessing.")
+            print("       Install librosa for better audio quality: pip install librosa soundfile")
+    except Exception as e:
+        print(f"[ERROR] Failed to extract audio: {e}")
+        print("        Make sure FFmpeg is installed and working properly.")
+        sys.exit(1)
 
     # Split audio into chunks with overlap
-    chunks = chunk_wav(wav, args.chunk_size, args.overlap)
-    print(f"[INFO] Split audio into {len(chunks)} chunks of {args.chunk_size} seconds each (with {args.overlap}s overlap)")
+    try:
+        chunks = chunk_wav(wav, args.chunk_size, args.overlap)
+        print(f"[INFO] Split audio into {len(chunks)} chunks of {args.chunk_size} seconds each (with {args.overlap}s overlap)")
+    except Exception as e:
+        print(f"[ERROR] Failed to split audio into chunks: {e}")
+        sys.exit(1)
 
     # Read initial context
     base_prompt = read_context()
+    if base_prompt:
+        print(f"[INFO] Loaded context prompt from WhisperContext.txt ({len(base_prompt)} characters)")
     
-    # Initialize output path
+    # Initialize output path and ensure its directory exists
     out_path = Path(args.out).resolve()
+    os.makedirs(out_path.parent, exist_ok=True)
+    print(f"[INFO] Output will be saved to: {out_path}")
     
     # Initialize or load transcript
     transcriptions = load_or_create_transcript(out_path, len(chunks))
+    if out_path.exists():
+        print(f"[INFO] Found existing transcript at {out_path}. Will resume from last position.")
     
     # Keep track of the full transcript for context
     full_transcript = ""
     previous_summaries = []
+    
+    # Count how many segments we need to process
+    segments_to_process = [i for i, entry in enumerate(transcriptions) if not entry["content"]]
+    if len(segments_to_process) < len(transcriptions):
+        print(f"[INFO] Found {len(transcriptions) - len(segments_to_process)} already processed segments.")
+    
+    if not segments_to_process:
+        print(f"[INFO] All segments already processed. Moving to summary generation if needed.")
     
     # Process each chunk
     for idx, chunk in enumerate(chunks):
@@ -402,10 +478,16 @@ def main():
         
         try:
             # Transcribe
+            start_time = time.time()
             if args.use_groq:
+                print(f"[INFO] Using Groq API for segment {idx+1}...")
                 text = transcribe_groq(chunk, prompt)
             else:
+                print(f"[INFO] Using local Whisper model for segment {idx+1}...")
                 text = transcribe_local(chunk, prompt)
+            
+            elapsed = time.time() - start_time
+            print(f"[INFO] Transcription completed in {elapsed:.1f} seconds.")
                 
             # Postprocess - fix repetitions
             text = detect_and_fix_repetition(text)
@@ -417,18 +499,30 @@ def main():
             entry["content"] = text
             
             # Generate summary
+            print(f"[INFO] Generating summary for segment {idx+1}...")
             entry["summary"] = generate_summary(text, previous_summaries)
             previous_summaries.append(entry["summary"])
             
             # Save after each chunk to enable recovery
             save_transcript(transcriptions, out_path)
+            print(f"[INFO] Saved progress to {out_path}")
             
         except Exception as e:
             print(f"[ERROR] Segment {idx} failed: {e}")
             save_transcript(transcriptions, out_path)
+            print(f"[INFO] Partial transcript saved to {out_path}")
+            print(f"[INFO] Run again with the same arguments to resume from segment {idx}")
             break  # keep partial JSON intact
 
     print(f"[DONE] Transcript saved to {out_path}")
+    
+    # Cleanup
+    try:
+        import shutil
+        shutil.rmtree(work)
+        print(f"[INFO] Cleaned up temporary files")
+    except:
+        print(f"[WARN] Failed to clean up temporary directory: {work}")
 
 
 if __name__ == "__main__":
