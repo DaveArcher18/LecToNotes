@@ -178,32 +178,25 @@ def read_context() -> str:
         return ""
     # Read the entire context
     full_context = ctx.read_text(encoding="utf-8")
-    max_length = 500  # Keep context under 500 characters
-    if len(full_context) > max_length:
-        print(f"[WARN] WhisperContext.txt is {len(full_context)} characters long. Truncating to {max_length} characters.")
-        return full_context[:max_length] + "..."
+    # No longer truncating here, local Whisper can handle longer initial prompts.
+    # The generate_context function will manage the length of the dynamic parts.
     return full_context
 
 
-def generate_context(transcript_so_far: str, segment_idx: int) -> str:
+def generate_context(base_file_context: str, transcript_so_far: str, segment_idx: int) -> str:
     """Generate context for transcription by combining file context and transcript history."""
-    # Get static context
-    context = read_context()
-    
-    # Truncate the static context if it's too long (leave room for transcript history)
-    max_context_length = 400  # Reduced from original to leave room for transcript history
-    if len(context) > max_context_length:
-        context = context[:max_context_length] + "..."
+    context = base_file_context
     
     # If this isn't the first segment, include some previous transcript for context
     if segment_idx > 0 and transcript_so_far:
-        # Extract the last ~300 words from transcript so far as context (reduced from 500)
+        # Extract the last ~300 words from transcript so far as context
         words = transcript_so_far.split()
-        max_words = 300  # Reduced from 500 to keep context shorter
+        max_words = 300
         previous_text = " ".join(words[-max_words:]) if len(words) > max_words else transcript_so_far
         
-        # Add a short segment of the transcript
-        context += f"\n\nPrevious transcript:\n{previous_text[-400:]}\n\nContinuation:"
+        # Add a short segment of the transcript (e.g., last 400 chars of the extracted words)
+        # This helps keep the prompt focused on recent content.
+        context += f"\\n\\nPrevious transcript:\\n{previous_text[-400:]}\\n\\nContinuation:"
     
     return context
 
@@ -400,7 +393,7 @@ def main():
     ap.add_argument("--skip-env-check", action="store_true", help="Skip environment validation check")
     ap.add_argument("--whisper-model", default="medium", choices=["tiny", "base", "small", "medium", "large"], help="Which Whisper model to use (default: medium)")
     args = ap.parse_args()
-
+    
     # Check environment unless skipped
     if not args.skip_env_check and not check_environment():
         sys.exit(1)
@@ -412,7 +405,7 @@ def main():
         if not os.getenv("OPENROUTER_API_KEY"):
             print("[ERROR] OpenRouter API key not found in .env file. Please add OPENROUTER_API_KEY to your .env file.")
             sys.exit(1)
-        process_transcript(args.out, True)
+        process_transcript(args.out, True) # use_groq is effectively False here, summarize_only=True
         return
 
     # Validate input for transcription mode
@@ -426,10 +419,10 @@ def main():
 
     print(f"[INFO] Processing video: {args.input}")
     print(f"[INFO] Output will be saved to: {args.out}")
-
+    
     work = Path(tempfile.mkdtemp())
     print(f"[INFO] Created temporary working directory: {work}")
-
+    
     # Acquire video
     if re.match(r"https?://", args.input):
         print(f"[INFO] Downloading YouTube video: {args.input}")
@@ -454,7 +447,7 @@ def main():
         wav = work / "audio.wav"
         extract_audio(video, wav)
         print(f"[INFO] Audio extracted to: {wav}")
-
+        
         if not args.skip_preprocessing and librosa_available:
             wav = preprocess_audio(wav)
         elif not librosa_available and not args.skip_preprocessing:
@@ -473,91 +466,117 @@ def main():
         print(f"[ERROR] Failed to split audio into chunks: {e}")
         sys.exit(1)
 
-    # Read initial context
-    base_prompt = read_context()
-    if base_prompt:
-        print(f"[INFO] Loaded context prompt from WhisperContext.txt ({len(base_prompt)} characters)")
-
+    # Read initial base context from file
+    base_file_prompt = read_context()
+    if base_file_prompt:
+        print(f"[INFO] Loaded base context prompt from WhisperContext.txt ({len(base_file_prompt)} characters)")
+    else:
+        print("[INFO] No base context prompt found in WhisperContext.txt or file is empty.")
+    
     # Initialize output path and ensure its directory exists
     out_path = Path(args.out).resolve()
     os.makedirs(out_path.parent, exist_ok=True)
-    print(f"[INFO] Output will be saved to: {out_path}")
+    # print(f"[INFO] Output will be saved to: {out_path}") # Already printed above
 
     # Initialize or load transcript
     transcriptions = load_or_create_transcript(out_path, len(chunks))
-    if out_path.exists():
-        print(f"[INFO] Found existing transcript at {out_path}. Will resume from last position.")
-
+    if out_path.exists() and any(entry["content"] for entry in transcriptions):
+        print(f"[INFO] Found existing transcript at {out_path}. Resuming...")
+    
     # Keep track of the full transcript for context
     full_transcript = ""
-    previous_summaries = []
-
-    # Count how many segments we need to process
-    segments_to_process = [i for i, entry in enumerate(transcriptions) if not entry["content"]]
-    if len(segments_to_process) < len(transcriptions):
-        print(f"[INFO] Found {len(transcriptions) - len(segments_to_process)} already processed segments.")
-
-    if not segments_to_process:
-        print(f"[INFO] All segments already processed. Moving to summary generation if needed.")
-
-    # Process each chunk
-    for idx, chunk in enumerate(chunks):
-        entry = transcriptions[idx]
-
-        # Skip if already processed
+    # Load existing transcript content to build up full_transcript for context generation
+    for entry in transcriptions:
         if entry["content"]:
             full_transcript += entry["content"] + " "
-            if entry.get("summary"):
-                previous_summaries.append(entry["summary"])
-            continue
+            
+    previous_summaries = [entry["summary"] for entry in transcriptions if entry.get("summary")]
+    
+    # Count how many segments we need to process
+    segments_to_process_indices = [i for i, entry in enumerate(transcriptions) if not entry["content"]]
+    
+    if not segments_to_process_indices:
+        print(f"[INFO] All segments already transcribed. Checking for missing summaries...")
+    else:
+        print(f"[INFO] {len(segments_to_process_indices)} segment(s) to transcribe.")
 
-        print(f"[INFO] Transcribing segment {idx+1}/{len(chunks)} …")
-
+    # Process each chunk
+    # Use tqdm for progress bar over the chunks that need processing
+    for idx in tqdm(range(len(chunks)), desc=f"Processing Chunks ({args.whisper_model} model)", unit="chunk"):
+        entry = transcriptions[idx]
+        
+        # Skip if already processed (content exists)
+        if entry["content"]:
+            if not entry.get("summary"): # Content exists, but summary might be missing
+                 tqdm.write(f"[INFO] Segment {idx+1}: Content exists. Generating summary...")
+                 entry["summary"] = generate_summary(entry["content"], previous_summaries)
+                 previous_summaries.append(entry["summary"])
+                 save_transcript(transcriptions, out_path) # Save after generating a missing summary
+            continue # Already fully processed or just summarized
+        
+        # tqdm.write(f"[INFO] Transcribing segment {idx+1}/{len(chunks)} using {args.whisper_model} model...")
+        
         # Generate context for this chunk
-        prompt = generate_context(full_transcript, idx)
-
+        current_prompt_for_whisper = generate_context(base_file_prompt, full_transcript, idx)
+        
         try:
             # Transcribe
             start_time = time.time()
-            print(f"[INFO] Using local Whisper model ({args.whisper_model}) for segment {idx+1}...")
-            text = transcribe_local(chunk, prompt, model_name=args.whisper_model)
+            text = transcribe_local(chunks[idx], current_prompt_for_whisper, model_name=args.whisper_model)
             elapsed = time.time() - start_time
-            print(f"[INFO] Transcription completed in {elapsed:.1f} seconds.")
-
+            tqdm.write(f"[INFO] Segment {idx+1}: Transcription completed in {elapsed:.1f}s.")
+                
             # Postprocess - fix repetitions
             text = detect_and_fix_repetition(text)
-
+            
             # Add new content to the running transcript
             full_transcript += text + " "
-
+            
             # Update entry
             entry["content"] = text
-
+            
             # Generate summary
-            print(f"[INFO] Generating summary for segment {idx+1}...")
+            tqdm.write(f"[INFO] Segment {idx+1}: Generating summary...")
             entry["summary"] = generate_summary(text, previous_summaries)
             previous_summaries.append(entry["summary"])
-
+            
             # Save after each chunk to enable recovery
             save_transcript(transcriptions, out_path)
-            print(f"[INFO] Saved progress to {out_path}")
-
+            # tqdm.write(f"[INFO] Segment {idx+1}: Progress saved to {out_path}") # tqdm will show progress
+            
         except Exception as e:
-            print(f"[ERROR] Segment {idx} failed: {e}")
-            save_transcript(transcriptions, out_path)
-            print(f"[INFO] Partial transcript saved to {out_path}")
-            print(f"[INFO] Run again with the same arguments to resume from segment {idx}")
-            break  # keep partial JSON intact
+            tqdm.write(f"[ERROR] Segment {idx+1} failed: {e}")
+            # Save whatever partial progress we might have from previous successful segments
+            save_transcript(transcriptions, out_path) 
+            tqdm.write(f"[INFO] Partial transcript saved to {out_path}. Run again to resume.")
+            # Consider whether to break or continue with other chunks. For now, break.
+            break 
 
-    print(f"[DONE] Transcript saved to {out_path}")
+    # Final check for any missing summaries if all content was present initially or after transcription
+    missing_summaries = False
+    for i, entry in enumerate(tqdm(transcriptions, desc="Finalizing Summaries", unit="summary")):
+        if entry["content"] and not entry.get("summary"):
+            if not missing_summaries: # Print only once
+                 tqdm.write("[INFO] Some segments have content but are missing summaries. Generating now...")
+            missing_summaries = True
+            entry["summary"] = generate_summary(entry["content"], previous_summaries)
+            previous_summaries.append(entry["summary"]) # Keep previous_summaries up-to-date
+            save_transcript(transcriptions, out_path) # Save after each summary generation
 
+    if missing_summaries:
+         tqdm.write(f"[INFO] All missing summaries generated and saved to {out_path}")
+    elif not segments_to_process_indices and not any(not e.get("summary") for e in transcriptions if e["content"]):
+        print(f"[INFO] Transcript {out_path} is already complete with all segments and summaries.")
+    else:
+        print(f"[DONE] Transcript saved to {out_path}")
+    
     # Cleanup
     try:
         import shutil
         shutil.rmtree(work)
-        print(f"[INFO] Cleaned up temporary files")
-    except:
-        print(f"[WARN] Failed to clean up temporary directory: {work}")
+        print(f"[INFO] Cleaned up temporary files from {work}")
+    except Exception as e: # Use specific exception if possible, e.g., OSError
+        print(f"[WARN] Failed to clean up temporary directory: {work}. Error: {e}")
 
 
 if __name__ == "__main__":
