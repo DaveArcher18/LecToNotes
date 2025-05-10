@@ -25,10 +25,10 @@ except ImportError:
     librosa_available = False
 
 try:
-    import whisper  # type: ignore
-    whisper_available = True
+    from parakeet_mlx import from_pretrained
+    parakeet_available = True
 except ImportError:
-    whisper_available = False
+    parakeet_available = False
 
 # ────────────────────────────────────────────────────────────────────────────
 load_dotenv()
@@ -45,6 +45,9 @@ OPENROUTER_HEADERS = {
     "Content-Type": "application/json"
 }
 
+# Default Parakeet model
+DEFAULT_PARAKEET_MODEL = "mlx-community/parakeet-tdt-0.6b-v2"
+
 RETRY_DELAY = 2  # seconds
 
 # ---------------------------------------------------------------------------
@@ -60,9 +63,18 @@ def check_environment():
     if not os.getenv("OPENROUTER_API_KEY"):
         errors.append("OPENROUTER_API_KEY is missing in the .env file. Required for DeepSeek Prover summarization.")
     
+    # Check for ffmpeg (required by parakeet-mlx)
+    try:
+        import subprocess
+        subprocess.run(["ffmpeg", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    except (subprocess.SubprocessError, FileNotFoundError):
+        errors.append("ffmpeg not installed or not in PATH. Required for audio processing.")
+        errors.append("Please install ffmpeg: https://ffmpeg.org/download.html")
+    
     # Check for required dependencies
-    if not whisper_available:
-        errors.append("Local Whisper not installed. Unable to perform transcription.")
+    if not parakeet_available:
+        errors.append("Parakeet-MLX not installed. Unable to perform transcription.")
+        errors.append("Please install parakeet-mlx: pip install -U parakeet-mlx")
     
     if not librosa_available:
         warnings.append("Librosa not installed. Audio preprocessing will be skipped.")
@@ -172,14 +184,17 @@ def chunk_wav(wav: Path, length_sec: int = 300, overlap_sec: int = 10) -> List[P
 
 
 def read_context() -> str:
-    """Read context from WhisperContext.txt file."""
-    ctx = Path(__file__).with_name("WhisperContext.txt")
+    """Read context from TranscriptionContext.txt file."""
+    # Try the new name first
+    ctx = Path(__file__).with_name("TranscriptionContext.txt")
     if not ctx.exists():
-        return ""
+        # Fall back to the old name for backward compatibility
+        ctx = Path(__file__).with_name("WhisperContext.txt")
+        if not ctx.exists():
+            return ""
+    
     # Read the entire context
     full_context = ctx.read_text(encoding="utf-8")
-    # No longer truncating here, local Whisper can handle longer initial prompts.
-    # The generate_context function will manage the length of the dynamic parts.
     return full_context
 
 
@@ -256,23 +271,29 @@ def save_transcript(transcript: List[Dict[str, Any]], out_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# transcription engine (local Whisper only)
+# transcription engine (Parakeet-MLX)
 # ---------------------------------------------------------------------------
-def transcribe_local(wav: Path, prompt: str, model_name: str = "medium") -> str:
-    """Transcribe audio using local Whisper model."""
-    if not whisper_available:
-        raise RuntimeError("Local whisper not installed")
-    model = whisper.load_model(model_name)
-    out = model.transcribe(
+def transcribe_with_parakeet(wav: Path, prompt: str, model_name: str = DEFAULT_PARAKEET_MODEL) -> str:
+    """Transcribe audio using Parakeet-MLX model."""
+    if not parakeet_available:
+        raise RuntimeError("Parakeet-MLX not installed")
+    
+    # Load the model
+    model = from_pretrained(model_name)
+    
+    # Transcribe the audio
+    # Note: Parakeet doesn't support initial prompts like Whisper does,
+    # but we can use its built-in chunking for longer audio files
+    result = model.transcribe(
         str(wav),
-        initial_prompt="English academic lecture transcript: " + prompt,
-        task="transcribe",
-        temperature=0,
-        best_of=5,
-        beam_size=5,
-        condition_on_previous_text=True
+        # Use Parakeet's built-in chunking for long audio files
+        # We'll use a reasonable default of 2 minutes per chunk with 15 seconds overlap
+        chunk_duration=120,  # 2 minutes per chunk
+        overlap_duration=15,  # 15 seconds overlap
     )
-    return out["text"].strip()
+    
+    # Return the transcribed text
+    return result.text.strip()
 
 
 def generate_summary(content: str, previous_summaries: List[str] = None) -> str:
@@ -383,7 +404,7 @@ def process_transcript(transcript_path: str, summarize_only: bool = False):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Get transcript from YouTube or mp4 using Whisper.")
+    ap = argparse.ArgumentParser(description="Get transcript from YouTube or mp4 using Parakeet-MLX.")
     ap.add_argument("input", nargs='?', help="YouTube URL or local mp4")
     ap.add_argument("--out", default="transcript.json", help="Output JSON file")
     ap.add_argument("--chunk-size", type=int, default=300, help="Chunk size in seconds (default: 300)")
@@ -391,7 +412,8 @@ def main():
     ap.add_argument("--skip-preprocessing", action="store_true", help="Skip audio preprocessing")
     ap.add_argument("--summarize-only", action="store_true", help="Only generate summaries for existing transcript using DeepSeek Prover")
     ap.add_argument("--skip-env-check", action="store_true", help="Skip environment validation check")
-    ap.add_argument("--whisper-model", default="medium", choices=["tiny", "base", "small", "medium", "large"], help="Which Whisper model to use (default: medium)")
+    ap.add_argument("--parakeet-model", default=DEFAULT_PARAKEET_MODEL, 
+                    help=f"Which Parakeet model to use (default: {DEFAULT_PARAKEET_MODEL})")
     args = ap.parse_args()
     
     # Check environment unless skipped
@@ -405,16 +427,16 @@ def main():
         if not os.getenv("OPENROUTER_API_KEY"):
             print("[ERROR] OpenRouter API key not found in .env file. Please add OPENROUTER_API_KEY to your .env file.")
             sys.exit(1)
-        process_transcript(args.out, True) # use_groq is effectively False here, summarize_only=True
+        process_transcript(args.out, True)
         return
 
     # Validate input for transcription mode
     if not args.input:
         ap.error("the input argument is required unless using --summarize-only")
 
-    if not whisper_available:
-        print("[ERROR] Local Whisper model not available.")
-        print("        Please install Whisper: pip install -U openai-whisper")
+    if not parakeet_available:
+        print("[ERROR] Parakeet-MLX not available.")
+        print("        Please install Parakeet-MLX: pip install -U parakeet-mlx")
         sys.exit(1)
 
     print(f"[INFO] Processing video: {args.input}")
@@ -469,9 +491,9 @@ def main():
     # Read initial base context from file
     base_file_prompt = read_context()
     if base_file_prompt:
-        print(f"[INFO] Loaded base context prompt from WhisperContext.txt ({len(base_file_prompt)} characters)")
+        print(f"[INFO] Loaded base context prompt from TranscriptionContext.txt ({len(base_file_prompt)} characters)")
     else:
-        print("[INFO] No base context prompt found in WhisperContext.txt or file is empty.")
+        print("[INFO] No base context prompt found in TranscriptionContext.txt or WhisperContext.txt or file is empty.")
     
     # Initialize output path and ensure its directory exists
     out_path = Path(args.out).resolve()
@@ -502,7 +524,7 @@ def main():
 
     # Process each chunk
     # Use tqdm for progress bar over the chunks that need processing
-    for idx in tqdm(range(len(chunks)), desc=f"Processing Chunks ({args.whisper_model} model)", unit="chunk"):
+    for idx in tqdm(range(len(chunks)), desc=f"Processing Chunks (Parakeet model: {args.parakeet_model})", unit="chunk"):
         entry = transcriptions[idx]
         
         # Skip if already processed (content exists)
@@ -514,15 +536,13 @@ def main():
                  save_transcript(transcriptions, out_path) # Save after generating a missing summary
             continue # Already fully processed or just summarized
         
-        # tqdm.write(f"[INFO] Transcribing segment {idx+1}/{len(chunks)} using {args.whisper_model} model...")
-        
         # Generate context for this chunk
-        current_prompt_for_whisper = generate_context(base_file_prompt, full_transcript, idx)
+        current_prompt_for_transcription = generate_context(base_file_prompt, full_transcript, idx)
         
         try:
             # Transcribe
             start_time = time.time()
-            text = transcribe_local(chunks[idx], current_prompt_for_whisper, model_name=args.whisper_model)
+            text = transcribe_with_parakeet(chunks[idx], current_prompt_for_transcription, model_name=args.parakeet_model)
             elapsed = time.time() - start_time
             tqdm.write(f"[INFO] Segment {idx+1}: Transcription completed in {elapsed:.1f}s.")
                 
@@ -542,7 +562,6 @@ def main():
             
             # Save after each chunk to enable recovery
             save_transcript(transcriptions, out_path)
-            # tqdm.write(f"[INFO] Segment {idx+1}: Progress saved to {out_path}") # tqdm will show progress
             
         except Exception as e:
             tqdm.write(f"[ERROR] Segment {idx+1} failed: {e}")

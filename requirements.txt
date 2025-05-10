@@ -12,12 +12,14 @@ scipy>=1.8.0      # For signal processing
 
 # Optional dependencies
 tensorflow>=2.5.0  # Optional for deep-feature embeddings in get_boards.py
-openai-whisper
+parakeet-mlx       # For Apple Silicon optimized speech recognition
 yt-dlp>=2022.1.1  # For YouTube video downloading
 
 # Audio processing (optional but recommended)
 librosa>=0.9.0    # For audio preprocessing
 soundfile>=0.10.0 # For audio file handling with librosa
 
-# For best performance with Whisper large/medium models, install torch with GPU support if available
+# If not using Apple Silicon, you might consider using Whisper instead:
+# pip install openai-whisper
+# If using Whisper, for best performance with large/medium models, install torch with GPU support if available
 # pip install torch --index-url https://download.pytorch.org/whl/cu118

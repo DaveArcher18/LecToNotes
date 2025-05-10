@@ -131,7 +131,7 @@ extract_transcript:
 		echo "Using Groq API for enhanced transcription..."; \
 		python get_transcript.py "$(VIDEO)" --use-groq --out $(TRANSCRIPT_JSON); \
 	else \
-		echo "Using local Whisper model for transcription..."; \
+		echo "Using Parakeet-MLX for local transcription..."; \
 		python get_transcript.py "$(VIDEO)" --out $(TRANSCRIPT_JSON); \
 	fi
 
@@ -216,7 +216,7 @@ help:
 	@echo ""
 	@echo "$(BOLD)INDIVIDUAL PIPELINE STEPS:$(RESET)"
 	@echo "  $(BOLD)make extract_transcript VIDEO=path.mp4 TITLE=\"Title\"$(RESET)"
-	@echo "      Extract transcript from video using Whisper"
+	@echo "      Extract transcript from video using Parakeet-MLX (Apple Silicon optimized ASR)"
 	@echo ""
 	@echo "  $(BOLD)make extract_boards VIDEO=path.mp4 TITLE=\"Title\"$(RESET)"
 	@echo "      Extract board images from video using computer vision"

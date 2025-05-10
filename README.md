@@ -37,7 +37,7 @@ Before getting started, make sure you have the following installed:
    make process_video VIDEO=/path/to/lecture.mp4 TITLE="Linear Algebra Lecture 1"
    ```
    This command will:
-   - Extract transcript from the video using the local Whisper model
+   - Extract transcript from the video using Parakeet-MLX (Apple Silicon optimized ASR)
    - Extract board images
    - Process board images with OCR (via OpenRouter)
    - Generate summaries for transcript segments (via OpenRouter)
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 Key dependencies include:
 - **numpy, opencv-python, scikit-image**: For image processing
 - **ffmpeg-python, pydub**: For audio processing
-- **openai-whisper**: For local transcription
+- **parakeet-mlx**: For local transcription (Apple Silicon optimized)
 - **librosa, soundfile**: For audio preprocessing (optional)
 - **yt-dlp**: For YouTube video downloading
 - **tensorflow**: For enhanced board detection (optional)
