@@ -1,0 +1,2 @@
+- Use the prover for summaries and transcript cleaning 
+- Improve Latex for display

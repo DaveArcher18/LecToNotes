@@ -15,7 +15,6 @@ import numpy as np
 from dotenv import load_dotenv
 from pydub import AudioSegment  # type: ignore
 from scipy import signal
-from groq import Groq  # type: ignore
 from tqdm import tqdm
 
 try:
@@ -33,15 +32,61 @@ except ImportError:
 
 # ────────────────────────────────────────────────────────────────────────────
 load_dotenv()
-client = Groq()  # uses GROQ_API_KEY from .env
 
-# Maximum Groq API retries
-MAX_RETRIES = 3
+# OpenRouter configuration for DeepSeek Prover
+import requests
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+SUMMARY_MODEL = "deepseek/deepseek-prover-v2:free"
+OPENROUTER_HEADERS = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "HTTP-Referer": "https://github.com/DaveArcher18/LecToNotes",
+    "X-Title": "LecToNotes Transcript", 
+    "Content-Type": "application/json"
+}
+
 RETRY_DELAY = 2  # seconds
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
+def check_environment():
+    """Check if the environment is properly set up for transcription and summarization."""
+    errors = []
+    warnings = []
+    
+    # Check for API keys
+    if not os.getenv("OPENROUTER_API_KEY"):
+        errors.append("OPENROUTER_API_KEY is missing in the .env file. Required for DeepSeek Prover summarization.")
+    
+    # Check for required dependencies
+    if not whisper_available:
+        errors.append("Local Whisper not installed. Unable to perform transcription.")
+    
+    if not librosa_available:
+        warnings.append("Librosa not installed. Audio preprocessing will be skipped.")
+    
+    # Print warnings and errors
+    if warnings:
+        print("\n[WARNINGS]")
+        for warning in warnings:
+            print(f"⚠️  {warning}")
+    
+    if errors:
+        print("\n[ERRORS]")
+        for error in errors:
+            print(f"❌ {error}")
+        print("\nPlease fix the above errors before running the script.")
+        return False
+    
+    # No errors, environment is ready
+    if not warnings:
+        print("✅ Environment check passed. All dependencies and API keys are in place.")
+    else:
+        print("✅ Environment check passed with warnings.")
+    
+    return True
 
 def hh_mm_ss(seconds: float) -> str:
     """Convert seconds to HH_MM_SS format."""
@@ -129,7 +174,15 @@ def chunk_wav(wav: Path, length_sec: int = 300, overlap_sec: int = 10) -> List[P
 def read_context() -> str:
     """Read context from WhisperContext.txt file."""
     ctx = Path(__file__).with_name("WhisperContext.txt")
-    return ctx.read_text(encoding="utf-8") if ctx.exists() else ""
+    if not ctx.exists():
+        return ""
+    # Read the entire context
+    full_context = ctx.read_text(encoding="utf-8")
+    max_length = 500  # Keep context under 500 characters
+    if len(full_context) > max_length:
+        print(f"[WARN] WhisperContext.txt is {len(full_context)} characters long. Truncating to {max_length} characters.")
+        return full_context[:max_length] + "..."
+    return full_context
 
 
 def generate_context(transcript_so_far: str, segment_idx: int) -> str:
@@ -137,12 +190,20 @@ def generate_context(transcript_so_far: str, segment_idx: int) -> str:
     # Get static context
     context = read_context()
     
+    # Truncate the static context if it's too long (leave room for transcript history)
+    max_context_length = 400  # Reduced from original to leave room for transcript history
+    if len(context) > max_context_length:
+        context = context[:max_context_length] + "..."
+    
     # If this isn't the first segment, include some previous transcript for context
     if segment_idx > 0 and transcript_so_far:
-        # Extract the last ~500 words from transcript so far as context
+        # Extract the last ~300 words from transcript so far as context (reduced from 500)
         words = transcript_so_far.split()
-        previous_text = " ".join(words[-500:]) if len(words) > 500 else transcript_so_far
-        context += f"\n\nPrevious transcript:\n{previous_text}\n\nContinuation:"
+        max_words = 300  # Reduced from 500 to keep context shorter
+        previous_text = " ".join(words[-max_words:]) if len(words) > max_words else transcript_so_far
+        
+        # Add a short segment of the transcript
+        context += f"\n\nPrevious transcript:\n{previous_text[-400:]}\n\nContinuation:"
     
     return context
 
@@ -202,15 +263,13 @@ def save_transcript(transcript: List[Dict[str, Any]], out_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# transcription engines
+# transcription engine (local Whisper only)
 # ---------------------------------------------------------------------------
-
-def transcribe_local(wav: Path, prompt: str) -> str:
+def transcribe_local(wav: Path, prompt: str, model_name: str = "medium") -> str:
     """Transcribe audio using local Whisper model."""
     if not whisper_available:
         raise RuntimeError("Local whisper not installed")
-    
-    model = whisper.load_model("medium")
+    model = whisper.load_model(model_name)
     out = model.transcribe(
         str(wav),
         initial_prompt="English academic lecture transcript: " + prompt,
@@ -220,59 +279,26 @@ def transcribe_local(wav: Path, prompt: str) -> str:
         beam_size=5,
         condition_on_previous_text=True
     )
-    
     return out["text"].strip()
 
 
-def transcribe_groq(wav: Path, prompt: str, retries: int = MAX_RETRIES) -> str:
-    """Transcribe audio using Groq's API with retry logic."""
-    if not os.getenv("GROQ_API_KEY"):
-        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY to your .env file.")
-        raise ValueError("Groq API key is missing")
-        
-    with open(wav, "rb") as f:
-        attempt = 0
-        while attempt < retries:
-            try:
-                res = client.audio.transcriptions.create(
-                    model="whisper-large-v3",
-                    file=f,
-                    prompt="English academic lecture transcript: " + prompt,
-                    temperature=0,
-                    suppress_tokens=[1, 2, 3, 4, 5]
-                )
-                return res.text.strip()
-            except Exception as e:
-                attempt += 1
-                if attempt >= retries:
-                    print(f"[ERROR] Failed to transcribe after {retries} attempts: {e}")
-                    raise
-                print(f"[ERROR] API call failed: {e}. Retrying in {RETRY_DELAY} seconds...")
-                time.sleep(RETRY_DELAY * attempt)  # Exponential backoff
-                f.seek(0)  # Reset file pointer for retry
-    
-    raise RuntimeError("Failed to transcribe after maximum retries")
-
-
 def generate_summary(content: str, previous_summaries: List[str] = None) -> str:
-    """Generate a summary for a transcript segment."""
-    if not os.getenv("GROQ_API_KEY"):
-        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY to your .env file.")
-        return "Summary generation failed. GROQ_API_KEY is missing."
-        
+    """Generate a summary for a transcript segment using DeepSeek Prover via OpenRouter."""
+    if not os.getenv("OPENROUTER_API_KEY"):
+        print("[ERROR] OpenRouter API key not found in .env file. Please add OPENROUTER_API_KEY to your .env file.")
+        return "Summary generation failed. OPENROUTER_API_KEY is missing."
     previous_context = ""
     if previous_summaries and len(previous_summaries) > 0:
         previous_context = "Previous segment summaries:\n" + "\n".join([
             f"Segment {i+1}: {summary}" for i, summary in enumerate(previous_summaries[-3:])
         ])
-    
     prompt = f"""
 You are an expert academic summarizer specializing in technical mathematics lectures.
 
 Please summarize the following 5-minute transcript segment from a mathematics lecture. The summary should have exactly two paragraphs:
 
 1. First paragraph: A comprehensive, information-rich summary capturing the key concepts, definitions, and mathematical relationships discussed.
-2. Second paragraph: Start with "Added motivation:" and explain why these concepts matter in the broader mathematical context.
+2. Second paragraph: Start with "Added motivation:" and explain why these concepts matter in the broader context of the lecture if possible.
 
 Use precise mathematical terminology and maintain the integrity of the technical content. The summary should be approximately 150 words total.
 
@@ -281,21 +307,36 @@ Use precise mathematical terminology and maintain the integrity of the technical
 TRANSCRIPT SEGMENT:
 {content}
 """
-    
+    messages = [
+        {"role": "system", "content": "You are an expert academic summarizer specializing in technical mathematics."},
+        {"role": "user", "content": prompt}
+    ]
+    payload = {
+        "model": SUMMARY_MODEL,
+        "messages": messages,
+        "temperature": 0.1,
+        "max_tokens": 1000,
+    }
     max_retries = 3
     retry_delay = 2
     for attempt in range(max_retries):
         try:
-            response = client.chat.completions.create(
-                model="llama3-70b-8192",
-                messages=[
-                    {"role": "system", "content": "You are an expert academic summarizer specializing in technical mathematics."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2,
-                max_tokens=300,
+            response = requests.post(
+                OPENROUTER_ENDPOINT, 
+                headers=OPENROUTER_HEADERS,
+                json=payload,
+                timeout=60
             )
-            return response.choices[0].message.content.strip()
+            if response.status_code != 200:
+                print(f"[ERROR] OpenRouter API error (HTTP {response.status_code}): {response.text}")
+                if attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)
+                    print(f"Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    continue
+                break
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
         except Exception as e:
             if attempt < max_retries - 1:
                 wait_time = retry_delay * (2 ** attempt)
@@ -303,8 +344,6 @@ TRANSCRIPT SEGMENT:
                 time.sleep(wait_time)
             else:
                 print(f"[ERROR] Failed to generate summary after {max_retries} attempts: {e}")
-                return f"Summary generation failed. Error: {str(e)}"
-    
     return "Summary generation failed. Please try again later."
 
 
@@ -312,7 +351,7 @@ TRANSCRIPT SEGMENT:
 # main
 # ---------------------------------------------------------------------------
 
-def process_transcript(transcript_path: str, use_groq: bool = True, summarize_only: bool = False):
+def process_transcript(transcript_path: str, summarize_only: bool = False):
     """Process an existing transcript to add summaries."""
     transcript_path = Path(transcript_path)
     if not transcript_path.exists():
@@ -327,7 +366,7 @@ def process_transcript(transcript_path: str, use_groq: bool = True, summarize_on
         print("[INFO] All transcript entries already have summaries.")
         return
     
-    print(f"[INFO] Generating summaries for {len(entries_to_process)} entries...")
+    print(f"[INFO] Generating summaries for {len(entries_to_process)} entries using DeepSeek Prover...")
     
     # Keep track of previous summaries for context
     previous_summaries = []
@@ -340,7 +379,7 @@ def process_transcript(transcript_path: str, use_groq: bool = True, summarize_on
             print(f"[WARN] Entry {i} has no content to summarize.")
             continue
             
-        print(f"[INFO] Generating summary for segment {i+1}/{len(transcript)}...")
+        print(f"[INFO] Generating summary for segment {i+1}/{len(transcript)} with DeepSeek Prover...")
         entry['summary'] = generate_summary(entry['content'], previous_summaries)
         previous_summaries.append(entry['summary'])
         
@@ -353,43 +392,44 @@ def process_transcript(transcript_path: str, use_groq: bool = True, summarize_on
 def main():
     ap = argparse.ArgumentParser(description="Get transcript from YouTube or mp4 using Whisper.")
     ap.add_argument("input", nargs='?', help="YouTube URL or local mp4")
-    ap.add_argument("--use-groq", action="store_true", help="Use Groq API instead of local Whisper")
     ap.add_argument("--out", default="transcript.json", help="Output JSON file")
     ap.add_argument("--chunk-size", type=int, default=300, help="Chunk size in seconds (default: 300)")
     ap.add_argument("--overlap", type=int, default=10, help="Overlap between chunks in seconds (default: 10)")
     ap.add_argument("--skip-preprocessing", action="store_true", help="Skip audio preprocessing")
-    ap.add_argument("--summarize-only", action="store_true", help="Only generate summaries for existing transcript")
+    ap.add_argument("--summarize-only", action="store_true", help="Only generate summaries for existing transcript using DeepSeek Prover")
+    ap.add_argument("--skip-env-check", action="store_true", help="Skip environment validation check")
+    ap.add_argument("--whisper-model", default="medium", choices=["tiny", "base", "small", "medium", "large"], help="Which Whisper model to use (default: medium)")
     args = ap.parse_args()
+
+    # Check environment unless skipped
+    if not args.skip_env_check and not check_environment():
+        sys.exit(1)
 
     # For summarize-only mode, process existing transcript and exit
     if args.summarize_only:
         print(f"[INFO] Summarize-only mode: Processing existing transcript at {args.out}")
-        process_transcript(args.out, args.use_groq, True)
+        # Check for OpenRouter API key
+        if not os.getenv("OPENROUTER_API_KEY"):
+            print("[ERROR] OpenRouter API key not found in .env file. Please add OPENROUTER_API_KEY to your .env file.")
+            sys.exit(1)
+        process_transcript(args.out, True)
         return
 
     # Validate input for transcription mode
     if not args.input:
         ap.error("the input argument is required unless using --summarize-only")
 
-    if args.use_groq and not os.getenv("GROQ_API_KEY"):
-        print("[ERROR] Groq API key not found in .env file. Please add GROQ_API_KEY=your_key to your .env file.")
-        print("        Continuing with local Whisper model instead.")
-        args.use_groq = False
-
-    # Check if Whisper is available for local transcription
-    if not args.use_groq and not whisper_available:
-        print("[ERROR] Local Whisper model not available and Groq not enabled.")
-        print("        Please either:")
-        print("        1. Install Whisper: pip install -U openai-whisper")
-        print("        2. Add GROQ_API_KEY to your .env file and use --use-groq")
+    if not whisper_available:
+        print("[ERROR] Local Whisper model not available.")
+        print("        Please install Whisper: pip install -U openai-whisper")
         sys.exit(1)
 
     print(f"[INFO] Processing video: {args.input}")
     print(f"[INFO] Output will be saved to: {args.out}")
-    
+
     work = Path(tempfile.mkdtemp())
     print(f"[INFO] Created temporary working directory: {work}")
-    
+
     # Acquire video
     if re.match(r"https?://", args.input):
         print(f"[INFO] Downloading YouTube video: {args.input}")
@@ -414,7 +454,7 @@ def main():
         wav = work / "audio.wav"
         extract_audio(video, wav)
         print(f"[INFO] Audio extracted to: {wav}")
-        
+
         if not args.skip_preprocessing and librosa_available:
             wav = preprocess_audio(wav)
         elif not librosa_available and not args.skip_preprocessing:
@@ -437,76 +477,71 @@ def main():
     base_prompt = read_context()
     if base_prompt:
         print(f"[INFO] Loaded context prompt from WhisperContext.txt ({len(base_prompt)} characters)")
-    
+
     # Initialize output path and ensure its directory exists
     out_path = Path(args.out).resolve()
     os.makedirs(out_path.parent, exist_ok=True)
     print(f"[INFO] Output will be saved to: {out_path}")
-    
+
     # Initialize or load transcript
     transcriptions = load_or_create_transcript(out_path, len(chunks))
     if out_path.exists():
         print(f"[INFO] Found existing transcript at {out_path}. Will resume from last position.")
-    
+
     # Keep track of the full transcript for context
     full_transcript = ""
     previous_summaries = []
-    
+
     # Count how many segments we need to process
     segments_to_process = [i for i, entry in enumerate(transcriptions) if not entry["content"]]
     if len(segments_to_process) < len(transcriptions):
         print(f"[INFO] Found {len(transcriptions) - len(segments_to_process)} already processed segments.")
-    
+
     if not segments_to_process:
         print(f"[INFO] All segments already processed. Moving to summary generation if needed.")
-    
+
     # Process each chunk
     for idx, chunk in enumerate(chunks):
         entry = transcriptions[idx]
-        
+
         # Skip if already processed
         if entry["content"]:
             full_transcript += entry["content"] + " "
             if entry.get("summary"):
                 previous_summaries.append(entry["summary"])
             continue
-        
+
         print(f"[INFO] Transcribing segment {idx+1}/{len(chunks)} …")
-        
+
         # Generate context for this chunk
         prompt = generate_context(full_transcript, idx)
-        
+
         try:
             # Transcribe
             start_time = time.time()
-            if args.use_groq:
-                print(f"[INFO] Using Groq API for segment {idx+1}...")
-                text = transcribe_groq(chunk, prompt)
-            else:
-                print(f"[INFO] Using local Whisper model for segment {idx+1}...")
-                text = transcribe_local(chunk, prompt)
-            
+            print(f"[INFO] Using local Whisper model ({args.whisper_model}) for segment {idx+1}...")
+            text = transcribe_local(chunk, prompt, model_name=args.whisper_model)
             elapsed = time.time() - start_time
             print(f"[INFO] Transcription completed in {elapsed:.1f} seconds.")
-                
+
             # Postprocess - fix repetitions
             text = detect_and_fix_repetition(text)
-            
+
             # Add new content to the running transcript
             full_transcript += text + " "
-            
+
             # Update entry
             entry["content"] = text
-            
+
             # Generate summary
             print(f"[INFO] Generating summary for segment {idx+1}...")
             entry["summary"] = generate_summary(text, previous_summaries)
             previous_summaries.append(entry["summary"])
-            
+
             # Save after each chunk to enable recovery
             save_transcript(transcriptions, out_path)
             print(f"[INFO] Saved progress to {out_path}")
-            
+
         except Exception as e:
             print(f"[ERROR] Segment {idx} failed: {e}")
             save_transcript(transcriptions, out_path)
@@ -515,7 +550,7 @@ def main():
             break  # keep partial JSON intact
 
     print(f"[DONE] Transcript saved to {out_path}")
-    
+
     # Cleanup
     try:
         import shutil

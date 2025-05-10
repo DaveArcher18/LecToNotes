@@ -7,9 +7,17 @@ pydub>=0.25.0
 python-dotenv>=0.19.0
 requests>=2.25.0
 matplotlib>=3.4.0
+tqdm>=4.65.0      # For progress bars
+scipy>=1.8.0      # For signal processing
 
 # Optional dependencies
 tensorflow>=2.5.0  # Optional for deep-feature embeddings in get_boards.py
-whisper>=1.0.0    # For local transcription (alternative to Groq)
-groq>=0.4.0       # For cloud-based transcription
+openai-whisper
 yt-dlp>=2022.1.1  # For YouTube video downloading
+
+# Audio processing (optional but recommended)
+librosa>=0.9.0    # For audio preprocessing
+soundfile>=0.10.0 # For audio file handling with librosa
+
+# For best performance with Whisper large/medium models, install torch with GPU support if available
+# pip install torch --index-url https://download.pytorch.org/whl/cu118
